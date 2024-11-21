@@ -1,7 +1,9 @@
 package main
 
 import (
-	graph2 "app/internal/graph"
+	"app/internal/graph"
+	resolvers "app/internal/graph/resolvers"
+	"app/internal/pkg/todo"
 	"log"
 	"net/http"
 	"os"
@@ -18,7 +20,15 @@ func main() {
 		port = defaultPort
 	}
 
-	srv := handler.NewDefaultServer(graph2.NewExecutableSchema(graph2.Config{Resolvers: &graph2.Resolver{}}))
+	srv := handler.NewDefaultServer(
+		graph.NewExecutableSchema(
+			graph.Config{
+				Resolvers: &resolvers.Resolver{
+					Todo: todo.NewTodoModule(),
+				},
+			},
+		),
+	)
 
 	http.Handle("/", playground.Handler("GraphQL playground", "/query"))
 	http.Handle("/query", srv)

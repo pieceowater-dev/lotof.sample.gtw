@@ -1,0 +1,11 @@
+type Todo {
+    id: ID!
+    text: String!
+    category: TodoCategoryEnum!
+    done: Boolean!
+}
+
+enum TodoCategoryEnum {
+    Personal
+    Work
+}

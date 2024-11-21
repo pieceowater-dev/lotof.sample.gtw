@@ -6,7 +6,7 @@ DOCKER_COMPOSE = docker-compose
 all: gqlgen run
 
 gqlgen:
-	$(GQLGEN) generate && go mod tidy
+	$(GQLGEN) generate && go mod tidy && git add *
 
 run:
 	go run ./cmd/server/main.go

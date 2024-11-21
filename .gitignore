@@ -21,6 +21,6 @@ go.work.sum
 # env file
 .env
 
-internal/graph/*
-!internal/graph/schema.graphqls
-!internal/graph/resolver.go
+internal/graph/
+!internal/graph/schemas/
+!internal/graph/resolvers/
