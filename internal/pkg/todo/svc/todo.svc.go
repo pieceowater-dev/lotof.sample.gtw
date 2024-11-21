@@ -18,7 +18,7 @@ func (s TodoService) Todos() ([]*model.Todo, error) {
 			Done:     false,
 		},
 		{
-			ID:       "2",
+			ID:       "21",
 			Text:     "Work Todo",
 			Category: model.TodoCategoryEnumWork,
 			Done:     true,

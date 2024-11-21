@@ -1,4 +1,4 @@
 input NewTodoDTO {
     text: String!
-    userId: String!
+    category: TodoCategoryEnum!
 }
