@@ -12,7 +12,7 @@ DOCKER_COMPOSE = docker-compose
 
 .PHONY: all generate run clean build-dev build-main compose-up compose-down
 
-all: gql-gen grpc-gen run
+all: grpc-gen gql-gen run
 
 # GQLGEN generation
 gql-gen:

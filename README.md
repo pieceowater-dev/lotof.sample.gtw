@@ -1,4 +1,4 @@
-# Lotof Sample Gateway
+# lotof.sample.gateway
 
 Welcome to the **Lotof Sample Gateway** project! This project provides a structure to generate, build, and run a [GraphQL](https://graphql.org/) server using [gqlgen](https://github.com/99designs/gqlgen) and [Docker](https://www.docker.com/) for containerization. Below you'll find a comprehensive guide to get started with this project.
 
@@ -21,14 +21,14 @@ The project uses a Makefile to automate common tasks. Below are the available ma
     - Executes the `gqlgen` and `grpcgen` targets.
     - Starts the server using `make run`.
 
-### `make gqlgen`
+### `make gql-gen`
 
 - **Description**: Generates the Go code required for your GraphQL server.
 - **Commands**:
     - Executes `$(GQLGEN) generate` to generate GraphQL server code.
     - Cleans up dependencies with `go mod tidy`.
 
-### `make grpcgen`
+### `make grpc-gen`
 
 - **Description**: Generates Go stubs for gRPC services.
 - **Commands**:
