@@ -11,10 +11,6 @@ import (
 	"net/http"
 )
 
-//todo:
-// 1 - readme file
-// 2 - .proto files sharing from microservices and unpacking into ./internal/core/grpc/protos/ somehow
-
 func main() {
 
 	srv := handler.NewDefaultServer(
