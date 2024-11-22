@@ -21,6 +21,8 @@ go.work.sum
 # env file
 .env
 
-internal/graph/
-!internal/graph/schemas/
-!internal/graph/resolvers/
+internal/core/graph/
+!internal/core/graph/schemas/
+!internal/core/graph/resolvers/
+
+internal/core/grpc/generated/

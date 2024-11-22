@@ -1,7 +1,7 @@
 package ctrl
 
 import (
-	"app/internal/graph/model"
+	"app/internal/core/graph/model"
 	"app/internal/pkg/todo/svc"
 	"fmt"
 )

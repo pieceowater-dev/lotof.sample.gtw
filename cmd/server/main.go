@@ -1,8 +1,8 @@
 package main
 
 import (
-	"app/internal/graph"
-	resolvers "app/internal/graph/resolvers"
+	"app/internal/core/graph"
+	resolvers "app/internal/core/graph/resolvers"
 	"app/internal/pkg/todo"
 	"log"
 	"net/http"
@@ -13,6 +13,11 @@ import (
 )
 
 const defaultPort = "8080"
+
+//todo:
+// 1 - abstract interface for transport communication
+// 2 - config for env + remote microservices hosts
+// 3 - .proto files sharing from microservices and unpacking into ./internal/core/grpc/protos/ somehow
 
 func main() {
 	port := os.Getenv("PORT")
