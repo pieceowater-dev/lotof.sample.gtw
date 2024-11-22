@@ -1,4 +1,4 @@
-# lotof.sample.gtw
+# Lotof Sample Gateway
 
 Welcome to the **Lotof Sample Gateway** project! This project provides a structure to generate, build, and run a [GraphQL](https://graphql.org/) server using [gqlgen](https://github.com/99designs/gqlgen) and [Docker](https://www.docker.com/) for containerization. Below you'll find a comprehensive guide to get started with this project.
 
@@ -16,10 +16,10 @@ The project uses a Makefile to automate common tasks. Below are the available ma
 
 ### `make all`
 
-- **Description**: Generates the necessary Go files for gqlgen and runs the server.
+- **Description**: Generates the necessary Go files for gqlgen, gRPC, and runs the server.
 - **Commands**:
-    - Runs the `gqlgen` target.
-    - Executes the server via `make run`.
+    - Executes the `gqlgen` and `grpcgen` targets.
+    - Starts the server using `make run`.
 
 ### `make gqlgen`
 
@@ -27,6 +27,13 @@ The project uses a Makefile to automate common tasks. Below are the available ma
 - **Commands**:
     - Executes `$(GQLGEN) generate` to generate GraphQL server code.
     - Cleans up dependencies with `go mod tidy`.
+
+### `make grpcgen`
+
+- **Description**: Generates Go stubs for gRPC services.
+- **Commands**:
+    - Uses `$(PROTOC)` with plugins `protoc-gen-go` and `protoc-gen-go-grpc`.
+    - Places the generated files in `./internal/core/grpc/generated`.
 
 ### `make run`
 
@@ -62,7 +69,7 @@ The project uses a Makefile to automate common tasks. Below are the available ma
 
 - **Description**: Cleans up generated files.
 - **Commands**:
-    - Removes `internal/graph/generated.go` and `internal/graph/model/models_gen.go`.
+    - Removes the files in `internal/core/grpc/generated` and GraphQL-related generated files.
 
 ## Getting Started
 
@@ -73,7 +80,7 @@ The project uses a Makefile to automate common tasks. Below are the available ma
    cd lotof.sample.gtw
    ```
 
-2. Install dependencies:
+2.	Install dependencies:
 
    ```bash
    go mod tidy
@@ -92,7 +99,7 @@ The project uses a Makefile to automate common tasks. Below are the available ma
    make build-main   # For production
    ```
 
-    To manage Docker services:
+5.	(Optional) To manage Docker services:
 
       ```bash
       make compose-up   # Start services

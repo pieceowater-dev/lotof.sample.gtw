@@ -1,49 +1,44 @@
 package svc
 
 import (
+	"app/internal/core/cfg"
 	"app/internal/core/graph/model"
 	pb "app/internal/core/grpc/generated"
+	"app/internal/core/transport"
 	"context"
 	"errors"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
 	"log"
-	"time"
 )
 
 type TodoService struct {
-	grpcAddress string
+	transport transport.Transport
 }
 
 func NewTodoService() *TodoService {
-	grpcAddress := "localhost:50051" // os.Getenv("LOTOF_SAMPLE_SVC_GRPC_ADDRESS")
-	return &TodoService{grpcAddress: grpcAddress}
+	factory := transport.NewFactory()
+	grpcTransport := factory.CreateTransport(
+		transport.GRPC,
+		cfg.Inst().LotofSampleSvcGrpcAddress,
+	)
+	return &TodoService{
+		transport: grpcTransport,
+	}
 }
 
 func (s *TodoService) Todos() ([]*model.Todo, error) {
-	// Establish gRPC connection
-	conn, err := grpc.Dial(s.grpcAddress, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	ctx := context.Background()
+	request := &pb.GetTodosRequest{}
+	response, err := s.transport.Send(ctx, request)
 	if err != nil {
-		return nil, errors.New("failed to connect to gRPC server: " + err.Error())
-	}
-	defer conn.Close()
-
-	// Create gRPC client
-	client := pb.NewTodoServiceClient(conn)
-
-	// Context with timeout
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
-	defer cancel()
-
-	// Send request
-	req := &pb.GetTodosRequest{}
-	res, err := client.GetTodos(ctx, req)
-	if err != nil {
-		log.Printf("Error calling GetTodos: %v", err)
+		log.Printf("Error sending request: %v", err)
 		return nil, err
 	}
 
-	// Convert gRPC response to local model
+	res, ok := response.(*pb.GetTodosResponse)
+	if !ok {
+		return nil, errors.New("invalid response type from gRPC transport")
+	}
+
 	var todos []*model.Todo
 	for _, t := range res.Todos {
 		todos = append(todos, &model.Todo{
