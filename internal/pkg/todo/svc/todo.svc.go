@@ -12,6 +12,7 @@ import (
 
 type TodoService struct {
 	transport transport.Transport
+	client    pb.TodoServiceClient // Add client as a property
 }
 
 func NewTodoService() *TodoService {
@@ -20,20 +21,32 @@ func NewTodoService() *TodoService {
 		transport.GRPC,
 		cfg.Inst().LotofSampleSvcGrpcAddress,
 	)
+
+	// Create the client only once and store it as a property
+	clientConstructor := pb.NewTodoServiceClient
+	client, err := grpcTransport.CreateClient(clientConstructor)
+	if err != nil {
+		log.Fatalf("Error creating client: %v", err)
+	}
+
 	return &TodoService{
 		transport: grpcTransport,
+		client:    client.(pb.TodoServiceClient), // Cast to the correct type
 	}
 }
 
 func (s *TodoService) Todos() ([]*model.Todo, error) {
 	ctx := context.Background()
-	request := &pb.GetTodosRequest{}
-	response, err := s.transport.Send(ctx, request)
+	request := &pb.GetTodosRequest{} // Dynamic request for GetTodos
+
+	// Send the request using the client stored in the TodoService instance
+	response, err := s.transport.Send(ctx, s.client, "GetTodos", request)
 	if err != nil {
 		log.Printf("Error sending request: %v", err)
 		return nil, err
 	}
 
+	// Assert the response to the correct type
 	res, ok := response.(*pb.GetTodosResponse)
 	if !ok {
 		return nil, errors.New("invalid response type from gRPC transport")

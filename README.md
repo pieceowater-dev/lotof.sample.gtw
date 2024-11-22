@@ -95,8 +95,7 @@ The project uses a Makefile to automate common tasks. Below are the available ma
 4. (Optional) To build Docker images for development or production:
 
    ```bash
-   make build-dev    # For development
-   make build-main   # For production
+   make build
    ```
 
 5.	(Optional) To manage Docker services:
@@ -108,7 +107,7 @@ The project uses a Makefile to automate common tasks. Below are the available ma
 
 ## Notes
 
-- Customize `dev.dockerfile` and `main.dockerfile` as needed for your project's specific requirements.
+- Customize `Dockerfile` as needed for your project's specific requirements.
 - The server entry point is at `./cmd/server/main.go`.
 
 ## License

@@ -3,7 +3,8 @@ package transport
 import "context"
 
 type Transport interface {
-	Send(ctx context.Context, request interface{}) (interface{}, error)
+	CreateClient(clientConstructor any) (any, error)
+	Send(ctx context.Context, client any, serviceMethod string, request any) (any, error)
 }
 
 type Type string

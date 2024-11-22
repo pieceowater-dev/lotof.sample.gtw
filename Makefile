@@ -43,12 +43,8 @@ grpc-update:
 run:
 	go run ./cmd/server/main.go
 
-build-dev:
-	docker build -f dev.dockerfile -t gateway-dev .
-
-build-main:
-	docker build -f main.dockerfile -t gateway-prod .
-
+build:
+	docker build -t gtw .
 
 
 compose-up:
