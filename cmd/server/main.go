@@ -3,8 +3,7 @@ package main
 import (
 	"app/internal/core/cfg"
 	"app/internal/core/graph"
-	resolvers "app/internal/core/graph/resolvers"
-	"app/internal/pkg/todo"
+	"app/internal/pkg"
 	"github.com/99designs/gqlgen/graphql/handler"
 	"github.com/99designs/gqlgen/graphql/playground"
 	"log"
@@ -12,17 +11,19 @@ import (
 )
 
 func main() {
+	// Initialize resolvers
+	resolvers := pkg.NewRouter().Init()
 
+	// Create GraphQL server
 	srv := handler.NewDefaultServer(
 		graph.NewExecutableSchema(
 			graph.Config{
-				Resolvers: &resolvers.Resolver{
-					Todo: todo.NewTodoModule(),
-				},
+				Resolvers: resolvers,
 			},
 		),
 	)
 
+	// Set up the HTTP routes
 	http.Handle("/", playground.Handler("GraphQL playground", "/query"))
 	http.Handle("/query", srv)
 
