@@ -1,0 +1,48 @@
+# Enum for pagination lengths
+enum FilterPaginationLengthEnum {
+    TEN
+    FIFTEEN
+    TWENTY
+    TWENTY_FIVE
+    THIRTY
+    THIRTY_FIVE
+    FORTY
+    FORTY_FIVE
+    FIFTY
+    FIFTY_FIVE
+    SIXTY
+    SIXTY_FIVE
+    SEVENTY
+    SEVENTY_FIVE
+    EIGHTY
+    EIGHTY_FIVE
+    NINETY
+    NINETY_FIVE
+    ONE_HUNDRED
+}
+
+# Enum for sort direction
+enum FilterSortByEnum {
+    ASC
+    DESC
+}
+
+# Input Type for filtering Users with pagination and sorting
+input DefaultFilterInput {
+    search: String
+    pagination: DefaultFilterPaginationInput
+    sort: DefaultFilterSortInput
+}
+
+# Pagination Input
+input DefaultFilterPaginationInput {
+    page: Int
+    length: FilterPaginationLengthEnum
+}
+
+# Sorting Input
+input DefaultFilterSortInput {
+    field: String
+    by: FilterSortByEnum
+    nullsFirst: Boolean
+}

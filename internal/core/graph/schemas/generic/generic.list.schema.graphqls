@@ -1,0 +1,4 @@
+# Pagination Info for PaginatedUserList
+type PaginationInfo {
+    count: Int!
+}

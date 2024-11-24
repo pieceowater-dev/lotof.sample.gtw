@@ -40,12 +40,13 @@ clean:
 
 # gRPC code generation
 grpc-gen:
+	@echo "Generating gRPC code from proto files..."
 	mkdir -p $(PROTOC_OUT_DIR)
-	$(PROTOC) \
+	find $(PROTOC_PKG_PATH)/$(PROTOC_DIR) -name "*.proto" | xargs $(PROTOC) \
 		-I $(PROTOC_PKG_PATH)/$(PROTOC_DIR) \
 		--go_out=$(PROTOC_OUT_DIR) \
-		--go-grpc_out=$(PROTOC_OUT_DIR) \
-		$(PROTOC_PKG_PATH)/$(PROTOC_DIR)/*/*/*.proto
+		--go-grpc_out=$(PROTOC_OUT_DIR)
+	@echo "gRPC code generation completed!"
 
 # Clean gRPC generated files
 grpc-clean:
