@@ -39,7 +39,7 @@ clean:
 	rm -rf $(BUILD_DIR) gql-clean grpc-clean
 
 # gRPC code generation
-grpc-gen: grpc-clean
+grpc-gen:
 	mkdir -p $(PROTOC_OUT_DIR)
 	$(PROTOC) \
 		-I $(PROTOC_PKG_PATH)/$(PROTOC_DIR) \
@@ -58,7 +58,6 @@ grpc-update:
 # GQLGEN generation
 gql-gen:
 	$(GQLGEN) generate
-	go mod tidy
 	git add -A
 
 # Clean GQLGEN generated files

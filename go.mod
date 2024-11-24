@@ -5,10 +5,10 @@ go 1.23.0
 require (
 	github.com/99designs/gqlgen v0.17.56
 	github.com/joho/godotenv v1.5.1
+	github.com/pieceowater-dev/lotof.sample.proto v0.0.9
 	github.com/vektah/gqlparser/v2 v2.5.19
 	google.golang.org/grpc v1.68.0
 	google.golang.org/protobuf v1.35.1
-	"github.com/pieceowater-dev/lotof.sample.proto" v0.0.8
 )
 
 require (

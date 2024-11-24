@@ -21,7 +21,7 @@ RUN go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest
 RUN go install github.com/99designs/gqlgen@latest
 
 # Generate gRPC and GraphQL code
-RUN make grpc-update
+# RUN make grpc-update
 RUN make grpc-gen
 RUN make gql-gen
 
