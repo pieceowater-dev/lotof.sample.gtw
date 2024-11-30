@@ -1,5 +1,6 @@
 schema:
   - internal/pkg/*/schema/*.graphqls
+  - internal/pkg/*/*/schema/*.graphqls
 
 exec:
   filename: internal/core/graph/generated.go
