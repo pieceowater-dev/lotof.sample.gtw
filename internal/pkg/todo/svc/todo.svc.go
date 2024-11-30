@@ -4,21 +4,21 @@ import (
 	"app/internal/core/cfg"
 	"app/internal/core/graph/model"
 	pb "app/internal/core/grpc/generated"
-	"app/internal/core/transport"
 	"context"
 	"errors"
+	"github.com/pieceowater-dev/lotof.lib.gossiper/v2"
 	"log"
 )
 
 type TodoService struct {
-	transport transport.Transport
+	transport gossiper.Transport
 	client    pb.TodoServiceClient // Add client as a property
 }
 
 func NewTodoService() *TodoService {
-	factory := transport.NewFactory()
+	factory := gossiper.NewTransportFactory()
 	grpcTransport := factory.CreateTransport(
-		transport.GRPC,
+		gossiper.GRPC,
 		cfg.Inst().LotofSampleSvcGrpcAddress,
 	)
 
