@@ -93,6 +93,8 @@ github.com/pieceowater-dev/lotof.lib.gossiper/v2 v2.0.3 h1:YqSOy95Tzw80/MFCRmJwh
 github.com/pieceowater-dev/lotof.lib.gossiper/v2 v2.0.3/go.mod h1:m/C+3z+Y2n9FPnakJl7jOl/4T1KfrE2/OhSslRKAGGc=
 github.com/pieceowater-dev/lotof.sample.proto v0.0.11 h1:gznFmG2GuZ6807fZMrcLDbb6o6M9xUZ7TwaRqYBoYCE=
 github.com/pieceowater-dev/lotof.sample.proto v0.0.11/go.mod h1:6D8aylFm0gbotbcMCqwP8IRMAnZDs5nOg8YM9TbiX6U=
+github.com/pieceowater-dev/lotof.sample.proto v0.0.12 h1:1Tca3sIVmN+YuA8S3oxXKYESJ9/OH3aY0u3T5ZuaqPo=
+github.com/pieceowater-dev/lotof.sample.proto v0.0.12/go.mod h1:6D8aylFm0gbotbcMCqwP8IRMAnZDs5nOg8YM9TbiX6U=
 github.com/pmezard/go-difflib v1.0.0 h1:4DBwDE0NGyQoBHbLQYPwSUPoCMWR5BEzIk/f1lZbAQM=
 github.com/pmezard/go-difflib v1.0.0/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZNVY4sRDYZ/4=
 github.com/rogpeppe/go-internal v1.10.0 h1:TMyTOH3F/DB16zRVcYyreMH6GnZZrwQVAoYjRBZyWFQ=
