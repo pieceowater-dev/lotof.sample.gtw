@@ -21,7 +21,5 @@ go.work.sum
 # env file
 .env
 
-internal/core/graph/model
-internal/core/graph/generated.go
-
-internal/core/grpc/generated/
+internal/core/graph/
+internal/core/grpc/

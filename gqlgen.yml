@@ -1,17 +1,17 @@
 schema:
-  - internal/core/graph/schemas/*/*.graphqls
+  - internal/pkg/*/schema/*.graphqls
 
 exec:
   filename: internal/core/graph/generated.go
   package: graph
 
 model:
-  filename: internal/core/graph/model/models_gen.go
+  filename: internal/core/graph/model/models.gen.go
   package: model
 
 resolver:
   layout: follow-schema
-  dir: internal/core/graph/resolvers
+  dir: internal/pkg/resolvers
   package: graph
   filename_template: "{name}.resolvers.go"
 

@@ -63,7 +63,7 @@ gql-gen:
 
 # Clean GQLGEN generated files
 gql-clean:
-	rm -rf internal/graph/generated.go internal/graph/model/models_gen.go
+	rm -rf internal/core/graph
 
 # Docker build target
 build-docker:

@@ -1,7 +1,7 @@
 package pkg
 
 import (
-	resolvers "app/internal/core/graph/resolvers"
+	resolvers "app/internal/pkg/resolvers"
 	"app/internal/pkg/todo"
 )
 
