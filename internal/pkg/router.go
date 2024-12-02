@@ -16,3 +16,10 @@ func (r *Router) Init() *resolvers.Resolver {
 		Todo: todo.NewTodoModule(),
 	}
 }
+
+// if this gateway serves as grpc server somehow uncomment below
+//// InitGRPC initializes gRPC routes
+//func (r *Router) InitGRPC(grpcServer *grpc.Server) {
+//	// Register gRPC services
+//	//pb.RegisterUserServiceServer(grpcServer, r.userModule.Controller)
+//}

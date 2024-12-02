@@ -9,6 +9,7 @@ import (
 
 type Config struct {
 	AppPort                   string
+	GrpcPort                  string
 	LotofSampleSvcGrpcAddress string
 }
 
@@ -26,6 +27,7 @@ func Inst() *Config {
 
 		instance = &Config{
 			AppPort:                   getEnv("APP_PORT", "8080"),
+			GrpcPort:                  getEnv("GRPC_PORT", "50051"),
 			LotofSampleSvcGrpcAddress: getEnv("LOTOF_SAMPLE_SVC_GRPC_ADDRESS", "localhost:50051"),
 		}
 	})
