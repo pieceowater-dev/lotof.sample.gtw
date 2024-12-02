@@ -17,6 +17,13 @@ func main() {
 	// if this gateway serves as grpc server somehow uncomment below
 	//serverManager := gossiper.NewServerManager()
 	//serverManager.AddServer(gossiper.NewGRPCServ(appCfg.GrpcPort, grpc.NewServer(), appRouter.InitGRPC))
+	//var wg sync.WaitGroup
+	//wg.Add(1)
+	//// Start gRPC servers in a goroutine
+	//go func() {
+	//	defer wg.Done()
+	//	serverManager.StartAll()
+	//}()
 
 	// Initialize resolvers
 	resolvers := appRouter.Init()
