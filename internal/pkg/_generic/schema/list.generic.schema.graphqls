@@ -1,4 +1,4 @@
 # Pagination Info for PaginatedUserList
 type PaginationInfo {
-    count: Int!
+    count: Int! # Total count of items
 }

@@ -1,0 +1,11 @@
+# Root query type for fetching data.
+type Query {
+    # Fetches a list of Something entities.
+    somethings: [Something!]!
+}
+
+# Root mutation type for modifying data.
+type Mutation {
+    # Mutates a Something entity with the provided input.
+    mutateSomething(input: MutateSomethingDTO!): Something!
+}

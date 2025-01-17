@@ -1,0 +1,5 @@
+# Input type for mutating a Something entity
+input MutateSomethingDTO {
+    id: Int! # ID of the Something entity
+    SomeEnum: SomeEnum! # Enum value representing the state of the Something entity
+}

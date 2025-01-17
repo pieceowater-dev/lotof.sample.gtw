@@ -1,4 +1,0 @@
-input NewTodoDTO {
-    text: String!
-    category: TodoCategoryEnum!
-}

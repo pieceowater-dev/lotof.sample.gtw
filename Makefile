@@ -1,6 +1,9 @@
+# Application name and build directory
 APP_NAME = lotof.sample.gtw
 BUILD_DIR = bin
 MAIN_FILE = cmd/server/main.go
+
+# Protobuf compiler and plugins
 PROTOC = protoc
 PROTOC_GEN_GO = $(GOPATH)/bin/protoc-gen-go
 PROTOC_GEN_GRPC_GO = $(GOPATH)/bin/protoc-gen-go-grpc
@@ -8,12 +11,16 @@ PROTOC_PKG = github.com/pieceowater-dev/lotof.sample.proto
 PROTOC_PKG_PATH = $(shell go list -m -f '{{.Dir}}' $(PROTOC_PKG))
 PROTOC_DIR = protos
 PROTOC_OUT_DIR = ./internal/core/grpc/generated
+
+# GQLGEN tool for GraphQL code generation
 GQLGEN = go run github.com/99designs/gqlgen
+
+# Docker Compose tool
 DOCKER_COMPOSE = docker-compose
 
 .PHONY: all clean build run update grpc-gen grpc-clean grpc-update gql-gen gql-clean compose-up compose-down
 
-# Setup the environment
+# Setup the environment by updating gRPC dependencies
 setup: grpc-update
 	@echo "Setup completed!"; \
 	go mod tidy
@@ -21,7 +28,7 @@ setup: grpc-update
 # Default build target
 all: build grpc-gen gql-gen
 
-# Update dependencies
+# Update Go module dependencies
 update:
 	go mod tidy
 
@@ -38,7 +45,7 @@ run: build
 clean:
 	rm -rf $(BUILD_DIR) gql-clean grpc-clean
 
-# gRPC code generation
+# gRPC code generation from proto files
 grpc-gen:
 	@echo "Generating gRPC code from proto files..."
 	mkdir -p $(PROTOC_OUT_DIR)
@@ -54,9 +61,10 @@ grpc-clean:
 
 # Update gRPC dependencies
 grpc-update:
+	go clean -modcache
 	go get -u $(PROTOC_PKG)@latest
 
-# GQLGEN generation
+# GQLGEN code generation
 gql-gen:
 	$(GQLGEN) generate
 	git add -A
@@ -65,7 +73,7 @@ gql-gen:
 gql-clean:
 	rm -rf internal/core/graph
 
-# Docker build target
+# Build Docker image
 build-docker:
 	docker build -t $(APP_NAME) .
 

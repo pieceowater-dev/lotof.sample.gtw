@@ -1,0 +1,11 @@
+# Represents a Something entity with an ID and an enum value.
+type Something {
+    id: ID! # Unique identifier for the Something entity.
+    SomeEnum: SomeEnum! # Enum value representing the state of the Something entity.
+}
+
+# Enum representing possible states of a Something entity.
+enum SomeEnum {
+    Hello # Represents the 'Hello' state.
+    World # Represents the 'World' state.
+}
