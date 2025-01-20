@@ -122,6 +122,7 @@ github.com/pieceowater-dev/lotof.lib.gossiper/v2 v2.0.15 h1:+DSr7d4awcw70ezURnIU
 github.com/pieceowater-dev/lotof.lib.gossiper/v2 v2.0.15/go.mod h1:XLkDdT/Ll6bY0yTaNmx+rbNDgryvoJwDfg2I6I9cmQ0=
 github.com/pieceowater-dev/lotof.sample.proto v0.0.14 h1:/tkZJT1+XSgZPPtenFxyYBbUCzYHIfmxYGrTTnyCpPI=
 github.com/pieceowater-dev/lotof.sample.proto v0.0.14/go.mod h1:6D8aylFm0gbotbcMCqwP8IRMAnZDs5nOg8YM9TbiX6U=
+github.com/pieceowater-dev/lotof.sample.proto v0.0.15/go.mod h1:6D8aylFm0gbotbcMCqwP8IRMAnZDs5nOg8YM9TbiX6U=
 github.com/pierrec/lz4/v4 v4.1.21 h1:yOVMLb6qSIDP67pl/5F7RepeKYu/VmTyEXvuMI5d9mQ=
 github.com/pierrec/lz4/v4 v4.1.21/go.mod h1:gZWDp/Ze/IJXGXf23ltt2EXimqmTUXEy0GFuRQyBid4=
 github.com/pkg/errors v0.9.1 h1:FEBLx1zS214owpjy7qsBeixbURkuhQAwrK5UwLGTwt4=

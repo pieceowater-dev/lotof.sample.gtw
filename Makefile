@@ -51,8 +51,8 @@ grpc-gen:
 	mkdir -p $(PROTOC_OUT_DIR)
 	find $(PROTOC_PKG_PATH)/$(PROTOC_DIR) -name "*.proto" | xargs $(PROTOC) \
 		-I $(PROTOC_PKG_PATH)/$(PROTOC_DIR) \
-		--go_out=$(PROTOC_OUT_DIR) \
-		--go-grpc_out=$(PROTOC_OUT_DIR)
+		--go_out=paths=source_relative:$(PROTOC_OUT_DIR) \
+		--go-grpc_out=paths=source_relative:$(PROTOC_OUT_DIR)
 	@echo "gRPC code generation completed!"
 
 # Clean gRPC generated files
