@@ -7,6 +7,7 @@ require (
 	github.com/joho/godotenv v1.5.1
 	github.com/pieceowater-dev/lotof.lib.gossiper/v2 v2.0.15
 	github.com/pieceowater-dev/lotof.sample.proto v0.0.16
+	github.com/vektah/gqlparser/v2 v2.5.19
 	google.golang.org/grpc v1.68.0
 )
 
@@ -58,7 +59,6 @@ require (
 	github.com/twitchyliquid64/golang-asm v0.15.1 // indirect
 	github.com/ugorji/go/codec v1.2.12 // indirect
 	github.com/urfave/cli/v2 v2.27.5 // indirect
-	github.com/vektah/gqlparser/v2 v2.5.19 // indirect
 	github.com/xrash/smetrics v0.0.0-20240521201337-686a1a2994c1 // indirect
 	go.opentelemetry.io/otel v1.26.0 // indirect
 	go.opentelemetry.io/otel/trace v1.26.0 // indirect
