@@ -67,7 +67,6 @@ grpc-update:
 # GQLGEN code generation
 gql-gen:
 	$(GQLGEN) generate
-	git add -A
 
 # Clean GQLGEN generated files
 gql-clean:

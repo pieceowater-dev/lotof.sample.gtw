@@ -1,54 +1,30 @@
 package main
 
 import (
-	"app/internal/core/cfg"
-	"app/internal/core/graph"
-	"app/internal/pkg"
-	"github.com/99designs/gqlgen/graphql/handler"
-	"github.com/99designs/gqlgen/graphql/playground"
+	"app/internal"
 	"log"
-	"net/http"
+	"os"
+	"os/signal"
+	"syscall"
 )
 
-// main is the entry point for the application.
 func main() {
-	// Load application configuration.
-	appCfg := cfg.Inst()
+	application := internal.NewApp()
 
-	// Initialize the application router.
-	appRouter := pkg.NewRouter()
+	// Start the application in a separate goroutine.
+	go func() {
+		application.Start()
+	}()
+	log.Println("Application started successfully")
 
-	// If this gateway serves as grpc server somehow uncomment below
-	// serverManager := gossiper.NewServerManager()
-	// serverManager.AddServer(gossiper.NewGRPCServ(appCfg.GrpcPort, grpc.NewServer(), appRouter.InitGRPC))
-	// var wg sync.WaitGroup
-	// wg.Add(1)
-	// // Start gRPC servers in a goroutine
-	// go func() {
-	//  defer wg.Done()
-	//  serverManager.StartAll()
-	// }()
+	// Handle OS signals for graceful shutdown.
+	signalChan := make(chan os.Signal, 1)
+	signal.Notify(signalChan, os.Interrupt, syscall.SIGTERM)
 
-	// Initialize resolvers.
-	resolvers, err := appRouter.InitializeRouter()
-	if err != nil {
-		log.Fatalf("Error initializing router: %v", err)
-	}
+	<-signalChan
+	log.Println("Received shutdown signal")
 
-	// Create GraphQL server.
-	srv := handler.NewDefaultServer(
-		graph.NewExecutableSchema(
-			graph.Config{
-				Resolvers: resolvers.(graph.ResolverRoot),
-			},
-		),
-	)
-
-	// Set up the HTTP routes.
-	http.Handle("/", playground.Handler("GraphQL playground", "/query"))
-	http.Handle("/query", srv)
-
-	// Start the HTTP server.
-	log.Printf("connect to http://localhost:%s/ for GraphQL playground", cfg.Inst().AppPort)
-	log.Fatal(http.ListenAndServe(":"+appCfg.AppPort, nil))
+	// Stop the application gracefully.
+	application.Stop()
+	log.Println("Application stopped successfully")
 }
