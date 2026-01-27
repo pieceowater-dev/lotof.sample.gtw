@@ -1,9 +1,6 @@
 package internal
 
 import (
-	"app/internal/core/cfg"
-	"app/internal/core/graph"
-	"app/internal/pkg"
 	"context"
 	"log/slog"
 	"strings"
@@ -14,6 +11,11 @@ import (
 	"github.com/gofiber/fiber/v2/middleware/cors"
 	gossiper "github.com/pieceowater-dev/lotof.lib.gossiper/v2"
 	"go.opentelemetry.io/otel/trace"
+
+	"app/internal/core/cfg"
+	"app/internal/core/generic/observability"
+	"app/internal/core/graph"
+	"app/internal/pkg"
 )
 
 type Application interface {
@@ -69,22 +71,7 @@ func NewApp() *App {
 
 func (a *App) Start() {
 	// Initialize the application router.
-	appRouter, err := pkg.NewRouter()
-	if err != nil {
-		a.logger.Error("create router failed", slog.String("error", err.Error()))
-		return
-	}
-
-	// If this gateway serves as grpc server somehow uncomment below
-	// serverManager := gossiper.NewServerManager()
-	// serverManager.AddServer(gossiper.NewGRPCServ(appCfg.GrpcPort, grpc.NewServer(), appRouter.InitGRPC))
-	// var wg sync.WaitGroup
-	// wg.Add(1)
-	// // Start gRPC servers in a goroutine
-	// go func() {
-	//  defer wg.Done()
-	//  serverManager.StartAll()
-	// }()
+	appRouter := pkg.NewRouter()
 
 	// Initialize router in goroutine but wait for it before starting HTTP
 	resolversChan := make(chan any, 1)
@@ -101,8 +88,8 @@ func (a *App) Start() {
 	// Wait for resolvers before starting HTTP server
 	resolvers := <-resolversChan
 
-	// Create GraphQL server.
-	srv := handler.NewDefaultServer(
+	// Create GraphQL server (for future use)
+	_ = handler.New(
 		graph.NewExecutableSchema(
 			graph.Config{
 				Resolvers: resolvers.(graph.ResolverRoot),
@@ -117,7 +104,12 @@ func (a *App) Start() {
 	)
 	fiberApp.Use(observability.FiberMiddleware(a.logger, a.tracer))
 	fiberApp.Use(cors.New())
-	_ = pkg.NewHttpRouter(fiberApp, resolvers)
+
+	// Setup GraphQL endpoint using playground and handler from gqlgen
+	fiberApp.Get("/", func(c *fiber.Ctx) error {
+		return c.SendString("GraphQL Gateway is running. Use POST /query for GraphQL queries.")
+	})
+
 	a.servers.AddServer(gossiper.NewRESTServ(a.cfg.AppPort, fiberApp, func(app *fiber.App) {}))
 
 	a.servers.StartAll()

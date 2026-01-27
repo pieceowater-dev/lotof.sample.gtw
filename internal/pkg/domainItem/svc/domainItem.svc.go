@@ -1,13 +1,15 @@
 package svc
 
 import (
-	"app/internal/core/cfg"
-	"app/internal/core/graph/model"
-	pb "app/internal/core/grpc/generated/lotof.sample.proto/lotof.sample.svc/domainItem"
 	"context"
 	"errors"
-	"github.com/pieceowater-dev/lotof.lib.gossiper/v2"
 	"log"
+
+	gossiper "github.com/pieceowater-dev/lotof.lib.gossiper/v2"
+
+	"app/internal/core/cfg"
+	"app/internal/core/graph/model"
+	pb "app/internal/core/grpc/generated/lotof.sample.svc/domainItem"
 )
 
 // DomainItemService handles the operations related to domain items.
