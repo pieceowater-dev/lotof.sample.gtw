@@ -1,3 +1,6 @@
+# If you prefer the allow list template instead of the deny list, see community template:
+# https://github.com/github/gitignore/blob/main/community/Golang/Go.AllowList.gitignore
+#
 # Binaries for programs and plugins
 *.exe
 *.exe~
@@ -20,7 +23,12 @@ go.work.sum
 
 # env file
 .env
-.idea
 
-internal/core/graph/
-internal/core/grpc/
+internal/core/grpc/generated/
+bin/*
+lotof.hub.msvc.users
+server
+
+.idea
+.vscode.idea
+.vscode

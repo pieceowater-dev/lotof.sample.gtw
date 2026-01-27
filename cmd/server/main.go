@@ -2,7 +2,7 @@ package main
 
 import (
 	"app/internal"
-	"log"
+	"log/slog"
 	"os"
 	"os/signal"
 	"syscall"
@@ -15,16 +15,16 @@ func main() {
 	go func() {
 		application.Start()
 	}()
-	log.Println("Application started successfully")
+	slog.Info("Application started successfully")
 
 	// Handle OS signals for graceful shutdown.
 	signalChan := make(chan os.Signal, 1)
 	signal.Notify(signalChan, os.Interrupt, syscall.SIGTERM)
 
 	<-signalChan
-	log.Println("Received shutdown signal")
+	slog.Info("Received shutdown signal")
 
 	// Stop the application gracefully.
 	application.Stop()
-	log.Println("Application stopped successfully")
+	slog.Info("Application stopped successfully")
 }

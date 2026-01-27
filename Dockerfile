@@ -1,48 +1,43 @@
-# Stage 1: Build the application and generate code
-FROM golang:1.23 AS builder
+# syntax=docker/dockerfile:1.7
+FROM golang:1.24-alpine AS builder
 
+# Install build dependencies (git, make, protoc and plugins for code generation)
+RUN apk add --no-cache git make protobuf
+RUN go install google.golang.org/protobuf/cmd/protoc-gen-go@v1.36.0 \
+    && go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@v1.3.0
+
+# Copy go.mod and go.sum for dependency caching
 WORKDIR /app
-
-# Install dependencies
-RUN apt-get update && \
-    apt-get install -y unzip wget curl libc6 protobuf-compiler && \
-    apt-get clean
-
-# Copy go mod and sum files
 COPY go.mod go.sum ./
-RUN go mod download
 
-# Copy the source code
+# Download dependencies (including private ones)
+RUN --mount=type=secret,id=gh_token,required=true \
+    git config --global url."https://$(cat /run/secrets/gh_token):x-oauth-basic@github.com/".insteadOf "https://github.com/" && \
+    go mod download
+
+# Copy the rest of the source code
 COPY . .
 
-# Install tools for code generation
-RUN go install google.golang.org/protobuf/cmd/protoc-gen-go@latest
-RUN go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest
-RUN go install github.com/99designs/gqlgen@latest
+# Clean up Go modules and vendor cache to reduce image size
+RUN go mod tidy
 
-# Generate gRPC and GraphQL code
-# RUN make grpc-update
-RUN make grpc-gen
-RUN make gql-gen
+# Generate gRPC and gqlgen code
+RUN make grpc-gen gql-gen
 
-# Build the application
-RUN CGO_ENABLED=0 GOOS=linux go build -o app ./cmd/server/main.go
+# Build the binary with optimizations for minimal size
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-s -w" -o bin/service ./cmd/server/main.go
 
-# Stage 2: Create the final image
-FROM alpine:latest
-
-WORKDIR /root/
-
-# Copy the binary from the builder stage
-COPY --from=builder /app/app .
-
-LABEL authors="pieceowater"
-
-# Command to run the application
-CMD ["./app"]
-
+# Final minimal image
+FROM alpine:3.20
+WORKDIR /app
+COPY --from=builder /app/bin/service /app/service
 EXPOSE 8080
+ENTRYPOINT ["/app/service"]
 
-# Clean up unnecessary files to reduce image size
-RUN rm -rf /app && \
-    rm -rf /root/.cache
+# For local build:
+#   echo "YOUR_GITHUB_PAT" > ~/.gh_token
+# then:
+#   docker buildx build --secret id=gh_token,src=$HOME/.gh_token -t my.app .
+# For GitHub Actions:
+#   build-push-action passes the secret via build-arg or secret
+

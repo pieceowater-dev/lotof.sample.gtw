@@ -67,6 +67,7 @@ grpc-update:
 # GQLGEN code generation
 gql-gen:
 	$(GQLGEN) generate
+	git add -A
 
 # Clean GQLGEN generated files
 gql-clean:
@@ -81,7 +82,7 @@ build-and-run-docker: build-docker
 	docker stop $(APP_NAME)
 	docker rm $(APP_NAME)
 	docker run -d -p 8080:8080 \
-		--network lotofsamplesvc_pieceonetwork \
+		--network lotofhubsvc_pieceonetwork \
 		--name $(APP_NAME) \
 		$(APP_NAME)
 

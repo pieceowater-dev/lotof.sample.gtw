@@ -5,12 +5,15 @@ import (
 	"app/internal/core/graph"
 	"app/internal/pkg"
 	"context"
-	"log"
-	"net/http"
+	"log/slog"
+	"strings"
+	"time"
 
 	"github.com/99designs/gqlgen/graphql/handler"
-	"github.com/99designs/gqlgen/graphql/playground"
+	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/cors"
 	gossiper "github.com/pieceowater-dev/lotof.lib.gossiper/v2"
+	"go.opentelemetry.io/otel/trace"
 )
 
 type Application interface {
@@ -19,17 +22,36 @@ type Application interface {
 }
 
 type App struct {
-	cfg     *cfg.Config
-	ctx     context.Context
-	servers *gossiper.ServerManager
+	cfg      *cfg.Config
+	ctx      context.Context
+	servers  *gossiper.ServerManager
+	logger   *slog.Logger
+	tracer   trace.Tracer
+	shutdown func(context.Context) error
 }
 
 func NewApp() *App {
+	baseCtx := context.Background()
+	obsLogger, tracer, shutdown, err := observability.Init(baseCtx, observability.Config{
+		ServiceName:  "lotof.hub.gtw",
+		Environment:  cfg.Inst().Environment,
+		OtlpEndpoint: cfg.Inst().OtlpEndpoint,
+		SampleRatio:  cfg.Inst().TraceSampleRatio,
+		LogLevel:     parseLevel(cfg.Inst().LogLevel),
+	})
+	if err != nil {
+		fallback := slog.Default()
+		fallback.Error("observability init failed", slog.Any("error", err))
+		obsLogger = fallback
+		tracer = trace.NewNoopTracerProvider().Tracer("noop")
+		shutdown = func(context.Context) error { return nil }
+	}
+
 	return &App{
 		// Initialize context
 		// This context can be used to manage the lifecycle of the application
 		// and pass it to various components as needed
-		ctx: context.Background(),
+		ctx: baseCtx,
 		// Load configuration
 		// This configuration can be used to set up the application
 		cfg: cfg.Inst(),
@@ -38,13 +60,20 @@ func NewApp() *App {
 		// and their lifecycle
 		// It can also be used to add new servers dynamically
 		// and manage their lifecycle
-		servers: gossiper.NewServerManager(),
+		servers:  gossiper.NewServerManager(),
+		logger:   obsLogger,
+		tracer:   tracer,
+		shutdown: shutdown,
 	}
 }
 
 func (a *App) Start() {
 	// Initialize the application router.
-	appRouter := pkg.NewRouter()
+	appRouter, err := pkg.NewRouter()
+	if err != nil {
+		a.logger.Error("create router failed", slog.String("error", err.Error()))
+		return
+	}
 
 	// If this gateway serves as grpc server somehow uncomment below
 	// serverManager := gossiper.NewServerManager()
@@ -57,11 +86,20 @@ func (a *App) Start() {
 	//  serverManager.StartAll()
 	// }()
 
-	// Initialize resolvers.
-	resolvers, err := appRouter.InitializeRouter()
-	if err != nil {
-		log.Fatalf("Error initializing router: %v", err)
-	}
+	// Initialize router in goroutine but wait for it before starting HTTP
+	resolversChan := make(chan any, 1)
+	go func() {
+		resolversInit, err := appRouter.InitializeRouter()
+		if err != nil {
+			a.logger.Error("initialize router failed", slog.String("error", err.Error()))
+			resolversChan <- nil
+			return
+		}
+		resolversChan <- resolversInit
+	}()
+
+	// Wait for resolvers before starting HTTP server
+	resolvers := <-resolversChan
 
 	// Create GraphQL server.
 	srv := handler.NewDefaultServer(
@@ -72,17 +110,39 @@ func (a *App) Start() {
 		),
 	)
 
-	// Set up the HTTP routes.
-	http.Handle("/", playground.Handler("GraphQL playground", "/query"))
-	http.Handle("/query", srv)
+	fiberApp := fiber.New(
+		fiber.Config{
+			DisableStartupMessage: true,
+		},
+	)
+	fiberApp.Use(observability.FiberMiddleware(a.logger, a.tracer))
+	fiberApp.Use(cors.New())
+	_ = pkg.NewHttpRouter(fiberApp, resolvers)
+	a.servers.AddServer(gossiper.NewRESTServ(a.cfg.AppPort, fiberApp, func(app *fiber.App) {}))
 
-	// Start the HTTP server.
-	log.Printf("connect to http://localhost:%s/ for GraphQL playground", a.cfg.AppPort)
-	log.Fatal(http.ListenAndServe(":"+a.cfg.AppPort, nil))
 	a.servers.StartAll()
 	defer a.servers.StopAll()
 }
 
 func (a *App) Stop() {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	if a.shutdown != nil {
+		_ = a.shutdown(ctx)
+	}
 	a.servers.StopAll()
+}
+
+func parseLevel(level string) slog.Level {
+	switch strings.ToLower(level) {
+	case "debug":
+		return slog.LevelDebug
+	case "warn", "warning":
+		return slog.LevelWarn
+	case "error":
+		return slog.LevelError
+	default:
+		return slog.LevelInfo
+	}
 }
