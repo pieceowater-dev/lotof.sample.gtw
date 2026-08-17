@@ -18,6 +18,12 @@ type Config struct {
 	OtlpEndpoint              string  // OpenTelemetry collector endpoint.
 	TraceSampleRatio          float64 // Trace sample ratio.
 	LogLevel                  string  // Log level (debug, info, warn, error).
+
+	// Auth (this app's own token, exchanged for a hub token) — mirrors
+	// menu/issues/contacts/atrace.
+	AppBundleName              string // app identifier registered in Hub's namespace_apps
+	LotofHubGatewayGrpcAddress string // Hub Gateway gRPC (hub token validation)
+	AppBundleSecret            string // secret for signing this app's tokens (HS256)
 }
 
 var (
@@ -43,6 +49,10 @@ func Inst() *Config {
 			OtlpEndpoint:              getEnv("OTLP_ENDPOINT", "localhost:4317"),
 			TraceSampleRatio:          getEnvFloat("TRACE_SAMPLE_RATIO", 0.1),
 			LogLevel:                  getEnv("LOG_LEVEL", "info"),
+
+			AppBundleName:              getEnv("APP_BUNDLE_NAME", "pieceowater.sample"),
+			LotofHubGatewayGrpcAddress: getEnv("LOTOF_HUB_GATEWAY_GRPC_ADDRESS", "localhost:50050"),
+			AppBundleSecret:            getEnv("APP_BUNDLE_SECRET", "12345678901234567890123456789012"),
 		}
 	})
 	return instance

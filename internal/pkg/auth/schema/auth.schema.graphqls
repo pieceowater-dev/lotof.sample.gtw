@@ -1,0 +1,7 @@
+extend type Mutation {
+  getAppToken: AppToken @hubAuth
+}
+
+type AppToken {
+  token: String!
+}

@@ -1,114 +1,87 @@
-# lotof.sample.gateway
+# lotof.sample.gtw
 
-Welcome to the **Lotof Sample Gateway** project! This project provides a structure to generate, build, and run a [GraphQL](https://graphql.org/) server using [gqlgen](https://github.com/99designs/gqlgen) and [Docker](https://www.docker.com/) for containerization. Below you'll find a comprehensive guide to get started with this project.
+Template GraphQL gateway for bootstrapping a new LOTOF domain. It ships with
+the full auth/tenant scaffolding every current domain gateway (menu, issues,
+contacts, atrace) already runs — hub-token → app-token exchange, namespace
+propagation to the backing svc, pooled gRPC connections, and the inbound
+`tenants.GatewayService` Hub calls to provision a namespace — plus one worked
+example module (`domainItem`) so the wiring is visible end to end.
+
+Pairs with [lotof.sample.proto](https://github.com/pieceowater-dev/lotof.sample.proto)
+(the gRPC contracts) and [lotof.sample.svc](https://github.com/pieceowater-dev/lotof.sample.svc)
+(the microservice this gateway talks to).
+
+## What's generic vs what's the example
+
+Keep as-is — this is shared auth/tenant plumbing, not domain logic:
+
+```
+internal/core/grpcpool/pool.go        # pooled gRPC client to the svc (dilutes an x/net HPACK panic risk under load)
+internal/core/generic/middleware/
+  middleware.go            # context keys + HubAuthDirective (hub token -> namespace/user claims)
+  sampleauth.go            # SampleAuthDirective -- this app's own token, validated locally
+  namespace.client.go      # propagates namespace + user-id to the svc over outgoing gRPC metadata
+  cors.go                  # CORS + "/api-<service>" path-prefix stripping for ALB ingress
+internal/pkg/
+  auth/                    # hub token -> this app's own token (HS256, AppBundleSecret)
+  gateway/                 # inbound tenants.GatewayService -- Hub calls this to provision a namespace, fans out to the svc's AppTenantsService
+```
+
+Delete or rename — this is the disposable example:
+
+```
+internal/pkg/domainItem/   # schema + resolvers + svc/ctrl calling the svc's SampleDomainItemService
+```
+
+## Bootstrapping a new service
+
+1. Fork this repo as `lotof.<domain>.gtw`.
+2. Repoint the proto dependency: `go get github.com/pieceowater-dev/lotof.<domain>.proto@latest`.
+3. Rename `internal/pkg/domainItem/` to your first real entity (schema/resolvers/svc/ctrl), update `internal/pkg/router.go` and `internal/pkg/_resolvers/resolver.go` to reference it instead.
+4. `internal/pkg/auth` mirrors menu/issues/contacts/atrace but skips role resolution (no role model here). If your domain needs roles, extend `AuthService.Auth` to resolve one via your svc (see `lotof.issues.gtw`'s `AuthService` for the pattern) and add a `roles` argument to `@sampleAuth` (see `lotof.issues.gtw`'s `@issuesAuth`).
+5. Update `.env` / `cfg.go` defaults: `APP_BUNDLE_NAME` (must match the svc template's), `LOTOF_SAMPLE_SVC_GRPC_ADDRESS`.
+6. `make setup && make generate && make build`.
+
+## Multi-tenancy model
+
+Hub only knows this gateway's address (from `namespace_apps`), not the
+backing svc's — so tenant provisioning always routes through here first.
+`internal/pkg/gateway` implements the inbound `tenants.GatewayService`
+(`AddNamespaceTenant`/`GetNamespaceHealth`) and fans each call out to every
+backing microservice's `AppTenantsService` (today just one: this domain's
+own svc). Every outbound call to the svc carries the tenant namespace (and
+calling user id, for the svc's on-demand tenant provisioning fallback) via
+`NamespaceClientInterceptor`/`UserIDClientInterceptor` — see `app.go`'s
+pooled client setup.
+
+Auth is two-layered: a Hub-issued JWT (validated structurally by
+`@hubAuth`, used only on `getAppToken`) is exchanged for this app's own
+namespace-scoped token (HS256, `AppBundleSecret`), which `@sampleAuth`
+then validates locally on every other field. WebSocket subscriptions can't
+send custom headers, so the token is instead passed via the
+`connection_init` payload and stashed in context by `app.go`'s `InitFunc`.
 
 ## Prerequisites
 
-Before you begin, ensure you have the following installed on your machine:
-
-- [Go](https://golang.org/doc/install) (version 1.23 or later)
+- [Go](https://golang.org/doc/install) 1.25+
 - [Docker](https://docs.docker.com/get-docker/)
-- [Docker Compose](https://docs.docker.com/compose/install/)
+- `protoc` + `protoc-gen-go` + `protoc-gen-go-grpc` (`make setup` installs the Go generators; `protoc` itself must already be on PATH)
 
-## Makefile Targets
+## Common tasks
 
-The project uses a Makefile to automate common tasks. Below are the available make targets and their functionalities:
-
-### `make all`
-
-- **Description**: Generates the necessary Go files for gqlgen, gRPC, and runs the server.
-- **Commands**:
-    - Executes the `gqlgen` and `grpcgen` targets.
-    - Starts the server using `make run`.
-
-### `make gql-gen`
-
-- **Description**: Generates the Go code required for your GraphQL server.
-- **Commands**:
-    - Executes `$(GQLGEN) generate` to generate GraphQL server code.
-    - Cleans up dependencies with `go mod tidy`.
-
-### `make grpc-gen`
-
-- **Description**: Generates Go stubs for gRPC services.
-- **Commands**:
-    - Uses `$(PROTOC)` with plugins `protoc-gen-go` and `protoc-gen-go-grpc`.
-    - Places the generated files in `./internal/core/grpc/generated`.
-
-### `make run`
-
-- **Description**: Runs the GraphQL server.
-- **Commands**:
-    - Executes `go run ./cmd/server/main.go` to start the server.
-
-### `make build-dev`
-
-- **Description**: Builds a Docker image for the development environment.
-- **Commands**:
-    - Builds Docker image using `dev.dockerfile` and names it `gateway-dev`.
-
-### `make build-main`
-
-- **Description**: Builds a Docker image for the production environment.
-- **Commands**:
-    - Builds Docker image using `main.dockerfile` and names it `gateway-prod`.
-
-### `make compose-up`
-
-- **Description**: Starts the services defined in `docker-compose.yml`.
-- **Commands**:
-    - Runs `$(DOCKER_COMPOSE) up -d` to start services in detached mode.
-
-### `make compose-down`
-
-- **Description**: Stops and removes the services defined in `docker-compose.yml`.
-- **Commands**:
-    - Runs `$(DOCKER_COMPOSE) down` to stop the services.
-
-### `make clean`
-
-- **Description**: Cleans up generated files.
-- **Commands**:
-    - Removes the files in `internal/core/grpc/generated` and GraphQL-related generated files.
-
-## Getting Started
-
-1. Clone the repository:
-
-   ```bash
-   git clone https://github.com/pieceowater-dev/lotof.sample.gtw.git
-   cd lotof.sample.gtw
-   ```
-
-2.	Install dependencies:
-
-   ```bash
-   go mod tidy
-   ```
-
-3. **Generate GraphQL files** and start the server:
-
-   ```bash
-   make all
-   ```
-
-4. (Optional) To build Docker images for development or production:
-
-   ```bash
-   make build
-   ```
-
-5.	(Optional) To manage Docker services:
-
-      ```bash
-      make compose-up   # Start services
-      make compose-down # Stop services
-      ```
+```
+make setup     # go get the latest proto package + go mod tidy
+make generate  # regenerate gRPC stubs (own proto + Hub's) and gqlgen code
+make build     # compile to bin/lotof.sample.gtw
+make run       # build + run
+make test      # go build ./... (no test suite yet)
+```
 
 ## Notes
 
 - Customize `Dockerfile` as needed for your project's specific requirements.
 - The server entry point is at `./cmd/server/main.go`.
+- `internal/core/graph/` (gqlgen output) is committed, unlike `internal/core/grpc/generated/` (gitignored) — `make gql-gen` stages it automatically via `git add -A`.
 
 ## License
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.

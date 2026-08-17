@@ -1,5 +1,9 @@
-# Input type for mutating a Something entity
-input MutateSomethingDTO {
-    id: Int! # ID of the Something entity
-    SomeEnum: SomeEnum! # Enum value representing the state of the Something entity
+input CreateDomainItemInput {
+    name: String!
+}
+
+input UpdateDomainItemInput {
+    id: ID!
+    name: String!
+    status: DomainItemStatus!
 }

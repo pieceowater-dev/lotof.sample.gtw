@@ -3,6 +3,8 @@ package domainItem
 import (
 	"app/internal/pkg/domainItem/ctrl"
 	"app/internal/pkg/domainItem/svc"
+
+	"google.golang.org/grpc"
 )
 
 // Module represents the domain item module, including its name, version, and API controller.
@@ -12,9 +14,10 @@ type Module struct {
 	API     *ctrl.DomainItemController
 }
 
-// New creates a new instance of the Module, initializing the service and controller.
-func New() Module {
-	service := svc.NewDomainItemService()
+// New creates a new instance of the Module, initializing the service and
+// controller against the shared pooled connection to the svc.
+func New(conn grpc.ClientConnInterface) Module {
+	service := svc.NewDomainItemService(conn)
 	controller := ctrl.NewDomainItemController(service)
 
 	return Module{
@@ -24,17 +27,8 @@ func New() Module {
 	}
 }
 
-// Initialize initializes the module. Currently not implemented.
-func (m Module) Initialize() error {
-	panic("Not implemented")
-}
+func (m Module) Initialize() error { return nil }
 
-// Version returns the version of the module.
-func (m Module) Version() string {
-	return m.version
-}
+func (m Module) Version() string { return m.version }
 
-// Name returns the name of the module.
-func (m Module) Name() string {
-	return m.name
-}
+func (m Module) Name() string { return m.name }

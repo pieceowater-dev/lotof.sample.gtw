@@ -2,67 +2,84 @@ package svc
 
 import (
 	"context"
-	"errors"
-	"log"
 
-	gossiper "github.com/pieceowater-dev/lotof.lib.gossiper/v2"
-
-	"app/internal/core/cfg"
 	"app/internal/core/graph/model"
+	genericpb "app/internal/core/grpc/generated/generic/utils"
 	pb "app/internal/core/grpc/generated/lotof.sample.svc/domainItem"
+
+	"google.golang.org/grpc"
 )
 
-// DomainItemService handles the operations related to domain items.
+// DomainItemService is the template's example client -- delete/rename this
+// whole module when bootstrapping a real domain, or copy its shape for a
+// real entity's client.
 type DomainItemService struct {
-	transport gossiper.Transport
-	client    pb.DomainItemServiceClient // gRPC client for domain item service.
+	client pb.SampleDomainItemServiceClient
 }
 
-// NewDomainItemService creates a new DomainItemService with the necessary transport and client.
-func NewDomainItemService() *DomainItemService {
-	factory := gossiper.NewTransportFactory()
-	grpcTransport := factory.CreateTransport(
-		gossiper.GRPC,
-		cfg.Inst().LotofSampleSvcGrpcAddress,
-	)
+// NewDomainItemService wraps the shared pooled connection to the svc --
+// every module's client is constructed the same way, from the one
+// connection dialed in app.go (see grpcpool.NewPooledClient).
+func NewDomainItemService(conn grpc.ClientConnInterface) *DomainItemService {
+	return &DomainItemService{client: pb.NewSampleDomainItemServiceClient(conn)}
+}
 
-	// Create the client only once and store it as a property.
-	clientConstructor := pb.NewDomainItemServiceClient
-	client, err := grpcTransport.CreateClient(clientConstructor)
-	if err != nil {
-		log.Fatalf("Error creating client: %v", err)
+func entityFromPb(item *pb.DomainItem) *model.DomainItem {
+	if item == nil {
+		return nil
 	}
-
-	return &DomainItemService{
-		transport: grpcTransport,
-		client:    client.(pb.DomainItemServiceClient), // Cast to the correct type.
+	return &model.DomainItem{
+		ID:     item.Id,
+		Name:   item.Name,
+		Status: model.DomainItemStatus(item.Status.String()),
 	}
 }
 
-// Somethings fetches a list of somethings using the gRPC client.
-func (s *DomainItemService) Somethings(ctx context.Context) ([]*model.Something, error) {
-	request := &pb.GetSomethingRequest{} // Dynamic request.
-
-	// Send the request using the client stored in the Service instance.
-	response, err := s.transport.Send(ctx, s.client, "GetSomething", request)
+func (s *DomainItemService) CreateDomainItem(ctx context.Context, name string) (*model.DomainItem, error) {
+	res, err := s.client.CreateDomainItem(ctx, &pb.CreateDomainItemRequest{Name: name})
 	if err != nil {
-		log.Printf("Error sending request: %v", err)
 		return nil, err
 	}
+	return entityFromPb(res), nil
+}
 
-	// Assert the response to the correct type.
-	res, ok := response.(*pb.GetSomethingResponse)
-	if !ok {
-		return nil, errors.New("invalid response type from gRPC transport")
+func (s *DomainItemService) DomainItem(ctx context.Context, id string) (*model.DomainItem, error) {
+	res, err := s.client.GetDomainItem(ctx, &pb.GetDomainItemRequest{Id: id})
+	if err != nil {
+		return nil, err
 	}
+	return entityFromPb(res), nil
+}
 
-	var somethings []*model.Something
-	for _, t := range res.Somethings {
-		somethings = append(somethings, &model.Something{
-			ID:       t.Id,
-			SomeEnum: model.SomeEnum(t.SomeEnum),
-		})
+func (s *DomainItemService) DomainItems(ctx context.Context, page, length int32) (*model.DomainItemList, error) {
+	res, err := s.client.ListDomainItems(ctx, &pb.ListDomainItemsRequest{
+		Pagination: &genericpb.Pagination{Page: page, Length: length},
+	})
+	if err != nil {
+		return nil, err
 	}
+	rows := make([]*model.DomainItem, len(res.DomainItems))
+	for i, item := range res.DomainItems {
+		rows[i] = entityFromPb(item)
+	}
+	return &model.DomainItemList{
+		Rows: rows,
+		Info: &model.PaginationInfo{Count: int(res.PaginationInfo.GetCount())},
+	}, nil
+}
 
-	return somethings, nil
+func (s *DomainItemService) UpdateDomainItem(ctx context.Context, id, name string, status pb.DomainItemStatus) (*model.DomainItem, error) {
+	res, err := s.client.UpdateDomainItem(ctx, &pb.UpdateDomainItemRequest{Id: id, Name: name, Status: status})
+	if err != nil {
+		return nil, err
+	}
+	return entityFromPb(res), nil
+}
+
+func (s *DomainItemService) DeleteDomainItem(ctx context.Context, id string) (bool, error) {
+	res, err := s.client.DeleteDomainItem(ctx, &pb.DeleteDomainItemRequest{Id: id})
+	if err != nil {
+		return false, err
+	}
+	return res.GetSuccess(), nil
 }

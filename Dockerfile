@@ -1,8 +1,8 @@
 # syntax=docker/dockerfile:1.7
-FROM golang:1.24-alpine AS builder
+FROM golang:1.25-alpine AS builder
 
 # Install build dependencies (git, make, protoc and plugins for code generation)
-RUN apk add --no-cache git make protobuf
+RUN apk add --no-cache git make protobuf protobuf-dev
 RUN go install google.golang.org/protobuf/cmd/protoc-gen-go@v1.36.0 \
     && go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@v1.3.0
 
@@ -21,8 +21,8 @@ COPY . .
 # Clean up Go modules and vendor cache to reduce image size
 RUN go mod tidy
 
-# Generate gRPC and gqlgen code
-RUN make grpc-gen gql-gen
+# Generate gRPC and gqlgen code (own + external hub proto package)
+RUN make generate
 
 # Build the binary with optimizations for minimal size
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-s -w" -o bin/service ./cmd/server/main.go

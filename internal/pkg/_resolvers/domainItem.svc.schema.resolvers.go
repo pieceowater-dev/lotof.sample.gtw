@@ -8,17 +8,35 @@ import (
 	"app/internal/core/graph"
 	"app/internal/core/graph/model"
 	"context"
-	"fmt"
 )
 
-// MutateSomething is the resolver for the mutateSomething field.
-func (r *mutationResolver) MutateSomething(ctx context.Context, input model.MutateSomethingDto) (*model.Something, error) {
-	panic(fmt.Errorf("not implemented: MutateSomething - mutateSomething"))
+// CreateDomainItem is the resolver for the createDomainItem field.
+func (r *mutationResolver) CreateDomainItem(ctx context.Context, input model.CreateDomainItemInput) (*model.DomainItem, error) {
+	return r.DomainItemModule.API.CreateDomainItem(ctx, input.Name)
 }
 
-// Somethings is the resolver for the somethings field.
-func (r *queryResolver) Somethings(ctx context.Context) ([]*model.Something, error) {
-	return r.DomainItem.API.Somethings(ctx)
+// UpdateDomainItem is the resolver for the updateDomainItem field.
+func (r *mutationResolver) UpdateDomainItem(ctx context.Context, input model.UpdateDomainItemInput) (*model.DomainItem, error) {
+	return r.DomainItemModule.API.UpdateDomainItem(ctx, input.ID, input.Name, input.Status)
+}
+
+// DeleteDomainItem is the resolver for the deleteDomainItem field.
+func (r *mutationResolver) DeleteDomainItem(ctx context.Context, id string) (*model.DeleteDomainItemResponse, error) {
+	success, err := r.DomainItemModule.API.DeleteDomainItem(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+	return &model.DeleteDomainItemResponse{Success: success}, nil
+}
+
+// DomainItem is the resolver for the domainItem field.
+func (r *queryResolver) DomainItem(ctx context.Context, id string) (*model.DomainItem, error) {
+	return r.DomainItemModule.API.DomainItem(ctx, id)
+}
+
+// DomainItems is the resolver for the domainItems field.
+func (r *queryResolver) DomainItems(ctx context.Context, filter *model.DefaultFilterInput) (*model.DomainItemList, error) {
+	return r.DomainItemModule.API.DomainItems(ctx, filter)
 }
 
 // Mutation returns graph.MutationResolver implementation.

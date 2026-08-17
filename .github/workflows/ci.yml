@@ -1,23 +1,79 @@
 # Main CI workflow: build, publish Docker image, and deploy
 name: Build, Publish & Deploy
 
-
- # Trigger on push to main/dev branches and version tags
 on:
   push:
     branches: [ "main", "test", "dev" ]
     tags: [ 'v*.*.*' ]
 
-
- # Global environment variables
 env:
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository }}
 
 jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.25'
+          cache: true
+          cache-dependency-path: go.sum
+
+      - name: Configure private module access
+        run: git config --global url."https://${{ secrets.GH_PRIVATE_PKG_PAT }}:x-oauth-basic@github.com/".insteadOf "https://github.com/"
+
+      - name: Download dependencies
+        run: go mod download
+
+      - name: Cache protoc binary
+        id: cache-protoc
+        uses: actions/cache@v4
+        with:
+          path: ~/protoc
+          key: protoc-29.3-${{ runner.os }}
+
+      - name: Install protoc
+        if: steps.cache-protoc.outputs.cache-hit != 'true'
+        run: |
+          mkdir -p ~/protoc
+          curl -Lo /tmp/protoc.zip https://github.com/protocolbuffers/protobuf/releases/download/v29.3/protoc-29.3-linux-x86_64.zip
+          unzip /tmp/protoc.zip -d ~/protoc
+          rm /tmp/protoc.zip
+
+      - name: Add protoc to PATH
+        run: echo "$HOME/protoc/bin" >> $GITHUB_PATH
+
+      - name: Cache Go tools
+        id: cache-go-tools
+        uses: actions/cache@v4
+        with:
+          path: ~/go/bin
+          key: go-tools-${{ runner.os }}-${{ hashFiles('go.sum') }}
+          restore-keys: |
+            go-tools-${{ runner.os }}-
+
+      - name: Install Go protoc plugins
+        if: steps.cache-go-tools.outputs.cache-hit != 'true'
+        run: |
+          go install google.golang.org/protobuf/cmd/protoc-gen-go@v1.36.0
+          go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@v1.3.0
+
+      - name: Generate code
+        run: make generate
+
+      - name: Run tests
+        run: make test
+
   build-and-push:
     runs-on: ubuntu-latest
     timeout-minutes: 5
+    needs: test
     permissions:
       contents: read
       packages: write

@@ -1,0 +1,7 @@
+directive @hubAuth on FIELD_DEFINITION
+
+# Protects a field with this app's own token (see SampleAuthDirective).
+# Real domains typically add a `roles: [SomeRoleEnum!] = []` argument here
+# once they have a role model — see lotof.issues.gtw's @issuesAuth for the
+# pattern.
+directive @sampleAuth on FIELD_DEFINITION

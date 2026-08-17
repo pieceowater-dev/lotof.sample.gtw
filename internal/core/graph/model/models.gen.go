@@ -8,6 +8,14 @@ import (
 	"strconv"
 )
 
+type AppToken struct {
+	Token string `json:"token"`
+}
+
+type CreateDomainItemInput struct {
+	Name string `json:"name"`
+}
+
 type DefaultFilterInput struct {
 	Search     *string                       `json:"search,omitempty"`
 	Pagination *DefaultFilterPaginationInput `json:"pagination,omitempty"`
@@ -25,9 +33,19 @@ type DefaultFilterSortInput struct {
 	NullsFirst *bool             `json:"nullsFirst,omitempty"`
 }
 
-type MutateSomethingDto struct {
-	ID       int      `json:"id"`
-	SomeEnum SomeEnum `json:"SomeEnum"`
+type DeleteDomainItemResponse struct {
+	Success bool `json:"success"`
+}
+
+type DomainItem struct {
+	ID     string           `json:"id"`
+	Name   string           `json:"name"`
+	Status DomainItemStatus `json:"status"`
+}
+
+type DomainItemList struct {
+	Rows []*DomainItem   `json:"rows"`
+	Info *PaginationInfo `json:"info"`
 }
 
 type Mutation struct {
@@ -40,9 +58,51 @@ type PaginationInfo struct {
 type Query struct {
 }
 
-type Something struct {
-	ID       string   `json:"id"`
-	SomeEnum SomeEnum `json:"SomeEnum"`
+type UpdateDomainItemInput struct {
+	ID     string           `json:"id"`
+	Name   string           `json:"name"`
+	Status DomainItemStatus `json:"status"`
+}
+
+type DomainItemStatus string
+
+const (
+	DomainItemStatusActive   DomainItemStatus = "ACTIVE"
+	DomainItemStatusArchived DomainItemStatus = "ARCHIVED"
+)
+
+var AllDomainItemStatus = []DomainItemStatus{
+	DomainItemStatusActive,
+	DomainItemStatusArchived,
+}
+
+func (e DomainItemStatus) IsValid() bool {
+	switch e {
+	case DomainItemStatusActive, DomainItemStatusArchived:
+		return true
+	}
+	return false
+}
+
+func (e DomainItemStatus) String() string {
+	return string(e)
+}
+
+func (e *DomainItemStatus) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = DomainItemStatus(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid DomainItemStatus", str)
+	}
+	return nil
+}
+
+func (e DomainItemStatus) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
 }
 
 type FilterPaginationLengthEnum string
@@ -158,46 +218,5 @@ func (e *FilterSortByEnum) UnmarshalGQL(v any) error {
 }
 
 func (e FilterSortByEnum) MarshalGQL(w io.Writer) {
-	fmt.Fprint(w, strconv.Quote(e.String()))
-}
-
-type SomeEnum string
-
-const (
-	SomeEnumHello SomeEnum = "Hello"
-	SomeEnumWorld SomeEnum = "World"
-)
-
-var AllSomeEnum = []SomeEnum{
-	SomeEnumHello,
-	SomeEnumWorld,
-}
-
-func (e SomeEnum) IsValid() bool {
-	switch e {
-	case SomeEnumHello, SomeEnumWorld:
-		return true
-	}
-	return false
-}
-
-func (e SomeEnum) String() string {
-	return string(e)
-}
-
-func (e *SomeEnum) UnmarshalGQL(v any) error {
-	str, ok := v.(string)
-	if !ok {
-		return fmt.Errorf("enums must be strings")
-	}
-
-	*e = SomeEnum(str)
-	if !e.IsValid() {
-		return fmt.Errorf("%s is not a valid SomeEnum", str)
-	}
-	return nil
-}
-
-func (e SomeEnum) MarshalGQL(w io.Writer) {
 	fmt.Fprint(w, strconv.Quote(e.String()))
 }

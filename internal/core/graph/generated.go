@@ -43,11 +43,35 @@ type ResolverRoot interface {
 }
 
 type DirectiveRoot struct {
+	HubAuth    func(ctx context.Context, obj any, next graphql.Resolver) (res any, err error)
+	SampleAuth func(ctx context.Context, obj any, next graphql.Resolver) (res any, err error)
 }
 
 type ComplexityRoot struct {
+	AppToken struct {
+		Token func(childComplexity int) int
+	}
+
+	DeleteDomainItemResponse struct {
+		Success func(childComplexity int) int
+	}
+
+	DomainItem struct {
+		ID     func(childComplexity int) int
+		Name   func(childComplexity int) int
+		Status func(childComplexity int) int
+	}
+
+	DomainItemList struct {
+		Info func(childComplexity int) int
+		Rows func(childComplexity int) int
+	}
+
 	Mutation struct {
-		MutateSomething func(childComplexity int, input model.MutateSomethingDto) int
+		CreateDomainItem func(childComplexity int, input model.CreateDomainItemInput) int
+		DeleteDomainItem func(childComplexity int, id string) int
+		GetAppToken      func(childComplexity int) int
+		UpdateDomainItem func(childComplexity int, input model.UpdateDomainItemInput) int
 	}
 
 	PaginationInfo struct {
@@ -55,20 +79,20 @@ type ComplexityRoot struct {
 	}
 
 	Query struct {
-		Somethings func(childComplexity int) int
-	}
-
-	Something struct {
-		ID       func(childComplexity int) int
-		SomeEnum func(childComplexity int) int
+		DomainItem  func(childComplexity int, id string) int
+		DomainItems func(childComplexity int, filter *model.DefaultFilterInput) int
 	}
 }
 
 type MutationResolver interface {
-	MutateSomething(ctx context.Context, input model.MutateSomethingDto) (*model.Something, error)
+	CreateDomainItem(ctx context.Context, input model.CreateDomainItemInput) (*model.DomainItem, error)
+	UpdateDomainItem(ctx context.Context, input model.UpdateDomainItemInput) (*model.DomainItem, error)
+	DeleteDomainItem(ctx context.Context, id string) (*model.DeleteDomainItemResponse, error)
+	GetAppToken(ctx context.Context) (*model.AppToken, error)
 }
 type QueryResolver interface {
-	Somethings(ctx context.Context) ([]*model.Something, error)
+	DomainItem(ctx context.Context, id string) (*model.DomainItem, error)
+	DomainItems(ctx context.Context, filter *model.DefaultFilterInput) (*model.DomainItemList, error)
 }
 
 type executableSchema struct {
@@ -90,17 +114,97 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 	_ = ec
 	switch typeName + "." + field {
 
-	case "Mutation.mutateSomething":
-		if e.complexity.Mutation.MutateSomething == nil {
+	case "AppToken.token":
+		if e.complexity.AppToken.Token == nil {
 			break
 		}
 
-		args, err := ec.field_Mutation_mutateSomething_args(context.TODO(), rawArgs)
+		return e.complexity.AppToken.Token(childComplexity), true
+
+	case "DeleteDomainItemResponse.success":
+		if e.complexity.DeleteDomainItemResponse.Success == nil {
+			break
+		}
+
+		return e.complexity.DeleteDomainItemResponse.Success(childComplexity), true
+
+	case "DomainItem.id":
+		if e.complexity.DomainItem.ID == nil {
+			break
+		}
+
+		return e.complexity.DomainItem.ID(childComplexity), true
+
+	case "DomainItem.name":
+		if e.complexity.DomainItem.Name == nil {
+			break
+		}
+
+		return e.complexity.DomainItem.Name(childComplexity), true
+
+	case "DomainItem.status":
+		if e.complexity.DomainItem.Status == nil {
+			break
+		}
+
+		return e.complexity.DomainItem.Status(childComplexity), true
+
+	case "DomainItemList.info":
+		if e.complexity.DomainItemList.Info == nil {
+			break
+		}
+
+		return e.complexity.DomainItemList.Info(childComplexity), true
+
+	case "DomainItemList.rows":
+		if e.complexity.DomainItemList.Rows == nil {
+			break
+		}
+
+		return e.complexity.DomainItemList.Rows(childComplexity), true
+
+	case "Mutation.createDomainItem":
+		if e.complexity.Mutation.CreateDomainItem == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_createDomainItem_args(context.TODO(), rawArgs)
 		if err != nil {
 			return 0, false
 		}
 
-		return e.complexity.Mutation.MutateSomething(childComplexity, args["input"].(model.MutateSomethingDto)), true
+		return e.complexity.Mutation.CreateDomainItem(childComplexity, args["input"].(model.CreateDomainItemInput)), true
+
+	case "Mutation.deleteDomainItem":
+		if e.complexity.Mutation.DeleteDomainItem == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_deleteDomainItem_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.DeleteDomainItem(childComplexity, args["id"].(string)), true
+
+	case "Mutation.getAppToken":
+		if e.complexity.Mutation.GetAppToken == nil {
+			break
+		}
+
+		return e.complexity.Mutation.GetAppToken(childComplexity), true
+
+	case "Mutation.updateDomainItem":
+		if e.complexity.Mutation.UpdateDomainItem == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_updateDomainItem_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.UpdateDomainItem(childComplexity, args["input"].(model.UpdateDomainItemInput)), true
 
 	case "PaginationInfo.count":
 		if e.complexity.PaginationInfo.Count == nil {
@@ -109,26 +213,29 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.PaginationInfo.Count(childComplexity), true
 
-	case "Query.somethings":
-		if e.complexity.Query.Somethings == nil {
+	case "Query.domainItem":
+		if e.complexity.Query.DomainItem == nil {
 			break
 		}
 
-		return e.complexity.Query.Somethings(childComplexity), true
+		args, err := ec.field_Query_domainItem_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
 
-	case "Something.id":
-		if e.complexity.Something.ID == nil {
+		return e.complexity.Query.DomainItem(childComplexity, args["id"].(string)), true
+
+	case "Query.domainItems":
+		if e.complexity.Query.DomainItems == nil {
 			break
 		}
 
-		return e.complexity.Something.ID(childComplexity), true
-
-	case "Something.SomeEnum":
-		if e.complexity.Something.SomeEnum == nil {
-			break
+		args, err := ec.field_Query_domainItems_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
 		}
 
-		return e.complexity.Something.SomeEnum(childComplexity), true
+		return e.complexity.Query.DomainItems(childComplexity, args["filter"].(*model.DefaultFilterInput)), true
 
 	}
 	return 0, false
@@ -138,10 +245,11 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 	opCtx := graphql.GetOperationContext(ctx)
 	ec := executionContext{opCtx, e, 0, 0, make(chan graphql.DeferredResult)}
 	inputUnmarshalMap := graphql.BuildUnmarshalerMap(
+		ec.unmarshalInputCreateDomainItemInput,
 		ec.unmarshalInputDefaultFilterInput,
 		ec.unmarshalInputDefaultFilterPaginationInput,
 		ec.unmarshalInputDefaultFilterSortInput,
-		ec.unmarshalInputMutateSomethingDTO,
+		ec.unmarshalInputUpdateDomainItemInput,
 	)
 	first := true
 
@@ -239,6 +347,14 @@ func (ec *executionContext) introspectType(name string) (*introspection.Type, er
 }
 
 var sources = []*ast.Source{
+	{Name: "../../pkg/_generic/schema/directives.schema.graphqls", Input: `directive @hubAuth on FIELD_DEFINITION
+
+# Protects a field with this app's own token (see SampleAuthDirective).
+# Real domains typically add a ` + "`" + `roles: [SomeRoleEnum!] = []` + "`" + ` argument here
+# once they have a role model — see lotof.issues.gtw's @issuesAuth for the
+# pattern.
+directive @sampleAuth on FIELD_DEFINITION
+`, BuiltIn: false},
 	{Name: "../../pkg/_generic/schema/filter.generic.schema.graphqls", Input: `# Enum for pagination lengths
 enum FilterPaginationLengthEnum {
     TEN
@@ -292,33 +408,58 @@ type PaginationInfo {
     count: Int! # Total count of items
 }
 `, BuiltIn: false},
-	{Name: "../../pkg/domainItem/schema/domainItem.dto.schema.graphqls", Input: `# Input type for mutating a Something entity
-input MutateSomethingDTO {
-    id: Int! # ID of the Something entity
-    SomeEnum: SomeEnum! # Enum value representing the state of the Something entity
-}`, BuiltIn: false},
-	{Name: "../../pkg/domainItem/schema/domainItem.ent.schema.graphqls", Input: `# Represents a Something entity with an ID and an enum value.
-type Something {
-    id: ID! # Unique identifier for the Something entity.
-    SomeEnum: SomeEnum! # Enum value representing the state of the Something entity.
+	{Name: "../../pkg/auth/schema/auth.schema.graphqls", Input: `extend type Mutation {
+  getAppToken: AppToken @hubAuth
 }
 
-# Enum representing possible states of a Something entity.
-enum SomeEnum {
-    Hello # Represents the 'Hello' state.
-    World # Represents the 'World' state.
-}`, BuiltIn: false},
-	{Name: "../../pkg/domainItem/schema/domainItem.svc.schema.graphqls", Input: `# Root query type for fetching data.
-type Query {
-    # Fetches a list of Something entities.
-    somethings: [Something!]!
+type AppToken {
+  token: String!
+}
+`, BuiltIn: false},
+	{Name: "../../pkg/domainItem/schema/domainItem.dto.schema.graphqls", Input: `input CreateDomainItemInput {
+    name: String!
 }
 
-# Root mutation type for modifying data.
+input UpdateDomainItemInput {
+    id: ID!
+    name: String!
+    status: DomainItemStatus!
+}
+`, BuiltIn: false},
+	{Name: "../../pkg/domainItem/schema/domainItem.ent.schema.graphqls", Input: `# DomainItem is the template's example entity -- delete/rename this whole
+# module (schema + resolvers + svc/ctrl + the proto service it calls) when
+# bootstrapping a real domain.
+type DomainItem {
+    id: ID!
+    name: String!
+    status: DomainItemStatus!
+}
+
+enum DomainItemStatus {
+    ACTIVE
+    ARCHIVED
+}
+
+type DomainItemList {
+    rows: [DomainItem!]!
+    info: PaginationInfo!
+}
+
+type DeleteDomainItemResponse {
+    success: Boolean!
+}
+`, BuiltIn: false},
+	{Name: "../../pkg/domainItem/schema/domainItem.svc.schema.graphqls", Input: `type Query {
+    domainItem(id: ID!): DomainItem @sampleAuth
+    domainItems(filter: DefaultFilterInput): DomainItemList! @sampleAuth
+}
+
 type Mutation {
-    # Mutates a Something entity with the provided input.
-    mutateSomething(input: MutateSomethingDTO!): Something!
-}`, BuiltIn: false},
+    createDomainItem(input: CreateDomainItemInput!): DomainItem! @sampleAuth
+    updateDomainItem(input: UpdateDomainItemInput!): DomainItem! @sampleAuth
+    deleteDomainItem(id: ID!): DeleteDomainItemResponse! @sampleAuth
+}
+`, BuiltIn: false},
 }
 var parsedSchema = gqlparser.MustLoadSchema(sources...)
 
@@ -326,26 +467,72 @@ var parsedSchema = gqlparser.MustLoadSchema(sources...)
 
 // region    ***************************** args.gotpl *****************************
 
-func (ec *executionContext) field_Mutation_mutateSomething_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+func (ec *executionContext) field_Mutation_createDomainItem_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
-	arg0, err := ec.field_Mutation_mutateSomething_argsInput(ctx, rawArgs)
+	arg0, err := ec.field_Mutation_createDomainItem_argsInput(ctx, rawArgs)
 	if err != nil {
 		return nil, err
 	}
 	args["input"] = arg0
 	return args, nil
 }
-func (ec *executionContext) field_Mutation_mutateSomething_argsInput(
+func (ec *executionContext) field_Mutation_createDomainItem_argsInput(
 	ctx context.Context,
 	rawArgs map[string]any,
-) (model.MutateSomethingDto, error) {
+) (model.CreateDomainItemInput, error) {
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
 	if tmp, ok := rawArgs["input"]; ok {
-		return ec.unmarshalNMutateSomethingDTO2appᚋinternalᚋcoreᚋgraphᚋmodelᚐMutateSomethingDto(ctx, tmp)
+		return ec.unmarshalNCreateDomainItemInput2appᚋinternalᚋcoreᚋgraphᚋmodelᚐCreateDomainItemInput(ctx, tmp)
 	}
 
-	var zeroVal model.MutateSomethingDto
+	var zeroVal model.CreateDomainItemInput
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Mutation_deleteDomainItem_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := ec.field_Mutation_deleteDomainItem_argsID(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
+	return args, nil
+}
+func (ec *executionContext) field_Mutation_deleteDomainItem_argsID(
+	ctx context.Context,
+	rawArgs map[string]any,
+) (string, error) {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
+	if tmp, ok := rawArgs["id"]; ok {
+		return ec.unmarshalNID2string(ctx, tmp)
+	}
+
+	var zeroVal string
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Mutation_updateDomainItem_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := ec.field_Mutation_updateDomainItem_argsInput(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+func (ec *executionContext) field_Mutation_updateDomainItem_argsInput(
+	ctx context.Context,
+	rawArgs map[string]any,
+) (model.UpdateDomainItemInput, error) {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
+	if tmp, ok := rawArgs["input"]; ok {
+		return ec.unmarshalNUpdateDomainItemInput2appᚋinternalᚋcoreᚋgraphᚋmodelᚐUpdateDomainItemInput(ctx, tmp)
+	}
+
+	var zeroVal model.UpdateDomainItemInput
 	return zeroVal, nil
 }
 
@@ -369,6 +556,52 @@ func (ec *executionContext) field_Query___type_argsName(
 	}
 
 	var zeroVal string
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Query_domainItem_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := ec.field_Query_domainItem_argsID(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
+	return args, nil
+}
+func (ec *executionContext) field_Query_domainItem_argsID(
+	ctx context.Context,
+	rawArgs map[string]any,
+) (string, error) {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
+	if tmp, ok := rawArgs["id"]; ok {
+		return ec.unmarshalNID2string(ctx, tmp)
+	}
+
+	var zeroVal string
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Query_domainItems_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := ec.field_Query_domainItems_argsFilter(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["filter"] = arg0
+	return args, nil
+}
+func (ec *executionContext) field_Query_domainItems_argsFilter(
+	ctx context.Context,
+	rawArgs map[string]any,
+) (*model.DefaultFilterInput, error) {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("filter"))
+	if tmp, ok := rawArgs["filter"]; ok {
+		return ec.unmarshalODefaultFilterInput2ᚖappᚋinternalᚋcoreᚋgraphᚋmodelᚐDefaultFilterInput(ctx, tmp)
+	}
+
+	var zeroVal *model.DefaultFilterInput
 	return zeroVal, nil
 }
 
@@ -472,8 +705,8 @@ func (ec *executionContext) field___Type_fields_argsIncludeDeprecated(
 
 // region    **************************** field.gotpl *****************************
 
-func (ec *executionContext) _Mutation_mutateSomething(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Mutation_mutateSomething(ctx, field)
+func (ec *executionContext) _AppToken_token(ctx context.Context, field graphql.CollectedField, obj *model.AppToken) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_AppToken_token(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -486,7 +719,7 @@ func (ec *executionContext) _Mutation_mutateSomething(ctx context.Context, field
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().MutateSomething(rctx, fc.Args["input"].(model.MutateSomethingDto))
+		return obj.Token, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -498,12 +731,354 @@ func (ec *executionContext) _Mutation_mutateSomething(ctx context.Context, field
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*model.Something)
+	res := resTmp.(string)
 	fc.Result = res
-	return ec.marshalNSomething2ᚖappᚋinternalᚋcoreᚋgraphᚋmodelᚐSomething(ctx, field.Selections, res)
+	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Mutation_mutateSomething(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_AppToken_token(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AppToken",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _DeleteDomainItemResponse_success(ctx context.Context, field graphql.CollectedField, obj *model.DeleteDomainItemResponse) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_DeleteDomainItemResponse_success(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Success, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	fc.Result = res
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_DeleteDomainItemResponse_success(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "DeleteDomainItemResponse",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _DomainItem_id(ctx context.Context, field graphql.CollectedField, obj *model.DomainItem) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_DomainItem_id(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ID, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNID2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_DomainItem_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "DomainItem",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _DomainItem_name(ctx context.Context, field graphql.CollectedField, obj *model.DomainItem) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_DomainItem_name(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Name, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_DomainItem_name(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "DomainItem",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _DomainItem_status(ctx context.Context, field graphql.CollectedField, obj *model.DomainItem) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_DomainItem_status(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Status, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(model.DomainItemStatus)
+	fc.Result = res
+	return ec.marshalNDomainItemStatus2appᚋinternalᚋcoreᚋgraphᚋmodelᚐDomainItemStatus(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_DomainItem_status(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "DomainItem",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type DomainItemStatus does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _DomainItemList_rows(ctx context.Context, field graphql.CollectedField, obj *model.DomainItemList) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_DomainItemList_rows(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Rows, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*model.DomainItem)
+	fc.Result = res
+	return ec.marshalNDomainItem2ᚕᚖappᚋinternalᚋcoreᚋgraphᚋmodelᚐDomainItemᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_DomainItemList_rows(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "DomainItemList",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_DomainItem_id(ctx, field)
+			case "name":
+				return ec.fieldContext_DomainItem_name(ctx, field)
+			case "status":
+				return ec.fieldContext_DomainItem_status(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type DomainItem", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _DomainItemList_info(ctx context.Context, field graphql.CollectedField, obj *model.DomainItemList) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_DomainItemList_info(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Info, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.PaginationInfo)
+	fc.Result = res
+	return ec.marshalNPaginationInfo2ᚖappᚋinternalᚋcoreᚋgraphᚋmodelᚐPaginationInfo(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_DomainItemList_info(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "DomainItemList",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "count":
+				return ec.fieldContext_PaginationInfo_count(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type PaginationInfo", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_createDomainItem(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_createDomainItem(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		directive0 := func(rctx context.Context) (any, error) {
+			ctx = rctx // use context from middleware stack in children
+			return ec.resolvers.Mutation().CreateDomainItem(rctx, fc.Args["input"].(model.CreateDomainItemInput))
+		}
+
+		directive1 := func(ctx context.Context) (any, error) {
+			if ec.directives.SampleAuth == nil {
+				var zeroVal *model.DomainItem
+				return zeroVal, errors.New("directive sampleAuth is not implemented")
+			}
+			return ec.directives.SampleAuth(ctx, nil, directive0)
+		}
+
+		tmp, err := directive1(rctx)
+		if err != nil {
+			return nil, graphql.ErrorOnPath(ctx, err)
+		}
+		if tmp == nil {
+			return nil, nil
+		}
+		if data, ok := tmp.(*model.DomainItem); ok {
+			return data, nil
+		}
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be *app/internal/core/graph/model.DomainItem`, tmp)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.DomainItem)
+	fc.Result = res
+	return ec.marshalNDomainItem2ᚖappᚋinternalᚋcoreᚋgraphᚋmodelᚐDomainItem(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_createDomainItem(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Mutation",
 		Field:      field,
@@ -512,11 +1087,13 @@ func (ec *executionContext) fieldContext_Mutation_mutateSomething(ctx context.Co
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "id":
-				return ec.fieldContext_Something_id(ctx, field)
-			case "SomeEnum":
-				return ec.fieldContext_Something_SomeEnum(ctx, field)
+				return ec.fieldContext_DomainItem_id(ctx, field)
+			case "name":
+				return ec.fieldContext_DomainItem_name(ctx, field)
+			case "status":
+				return ec.fieldContext_DomainItem_status(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type Something", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type DomainItem", field.Name)
 		},
 	}
 	defer func() {
@@ -526,9 +1103,242 @@ func (ec *executionContext) fieldContext_Mutation_mutateSomething(ctx context.Co
 		}
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Mutation_mutateSomething_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+	if fc.Args, err = ec.field_Mutation_createDomainItem_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_updateDomainItem(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_updateDomainItem(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		directive0 := func(rctx context.Context) (any, error) {
+			ctx = rctx // use context from middleware stack in children
+			return ec.resolvers.Mutation().UpdateDomainItem(rctx, fc.Args["input"].(model.UpdateDomainItemInput))
+		}
+
+		directive1 := func(ctx context.Context) (any, error) {
+			if ec.directives.SampleAuth == nil {
+				var zeroVal *model.DomainItem
+				return zeroVal, errors.New("directive sampleAuth is not implemented")
+			}
+			return ec.directives.SampleAuth(ctx, nil, directive0)
+		}
+
+		tmp, err := directive1(rctx)
+		if err != nil {
+			return nil, graphql.ErrorOnPath(ctx, err)
+		}
+		if tmp == nil {
+			return nil, nil
+		}
+		if data, ok := tmp.(*model.DomainItem); ok {
+			return data, nil
+		}
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be *app/internal/core/graph/model.DomainItem`, tmp)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.DomainItem)
+	fc.Result = res
+	return ec.marshalNDomainItem2ᚖappᚋinternalᚋcoreᚋgraphᚋmodelᚐDomainItem(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_updateDomainItem(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_DomainItem_id(ctx, field)
+			case "name":
+				return ec.fieldContext_DomainItem_name(ctx, field)
+			case "status":
+				return ec.fieldContext_DomainItem_status(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type DomainItem", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_updateDomainItem_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_deleteDomainItem(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_deleteDomainItem(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		directive0 := func(rctx context.Context) (any, error) {
+			ctx = rctx // use context from middleware stack in children
+			return ec.resolvers.Mutation().DeleteDomainItem(rctx, fc.Args["id"].(string))
+		}
+
+		directive1 := func(ctx context.Context) (any, error) {
+			if ec.directives.SampleAuth == nil {
+				var zeroVal *model.DeleteDomainItemResponse
+				return zeroVal, errors.New("directive sampleAuth is not implemented")
+			}
+			return ec.directives.SampleAuth(ctx, nil, directive0)
+		}
+
+		tmp, err := directive1(rctx)
+		if err != nil {
+			return nil, graphql.ErrorOnPath(ctx, err)
+		}
+		if tmp == nil {
+			return nil, nil
+		}
+		if data, ok := tmp.(*model.DeleteDomainItemResponse); ok {
+			return data, nil
+		}
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be *app/internal/core/graph/model.DeleteDomainItemResponse`, tmp)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.DeleteDomainItemResponse)
+	fc.Result = res
+	return ec.marshalNDeleteDomainItemResponse2ᚖappᚋinternalᚋcoreᚋgraphᚋmodelᚐDeleteDomainItemResponse(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_deleteDomainItem(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "success":
+				return ec.fieldContext_DeleteDomainItemResponse_success(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type DeleteDomainItemResponse", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_deleteDomainItem_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_getAppToken(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_getAppToken(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		directive0 := func(rctx context.Context) (any, error) {
+			ctx = rctx // use context from middleware stack in children
+			return ec.resolvers.Mutation().GetAppToken(rctx)
+		}
+
+		directive1 := func(ctx context.Context) (any, error) {
+			if ec.directives.HubAuth == nil {
+				var zeroVal *model.AppToken
+				return zeroVal, errors.New("directive hubAuth is not implemented")
+			}
+			return ec.directives.HubAuth(ctx, nil, directive0)
+		}
+
+		tmp, err := directive1(rctx)
+		if err != nil {
+			return nil, graphql.ErrorOnPath(ctx, err)
+		}
+		if tmp == nil {
+			return nil, nil
+		}
+		if data, ok := tmp.(*model.AppToken); ok {
+			return data, nil
+		}
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be *app/internal/core/graph/model.AppToken`, tmp)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.AppToken)
+	fc.Result = res
+	return ec.marshalOAppToken2ᚖappᚋinternalᚋcoreᚋgraphᚋmodelᚐAppToken(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_getAppToken(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "token":
+				return ec.fieldContext_AppToken_token(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type AppToken", field.Name)
+		},
 	}
 	return fc, nil
 }
@@ -577,8 +1387,8 @@ func (ec *executionContext) fieldContext_PaginationInfo_count(_ context.Context,
 	return fc, nil
 }
 
-func (ec *executionContext) _Query_somethings(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Query_somethings(ctx, field)
+func (ec *executionContext) _Query_domainItem(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Query_domainItem(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -590,8 +1400,112 @@ func (ec *executionContext) _Query_somethings(ctx context.Context, field graphql
 		}
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().Somethings(rctx)
+		directive0 := func(rctx context.Context) (any, error) {
+			ctx = rctx // use context from middleware stack in children
+			return ec.resolvers.Query().DomainItem(rctx, fc.Args["id"].(string))
+		}
+
+		directive1 := func(ctx context.Context) (any, error) {
+			if ec.directives.SampleAuth == nil {
+				var zeroVal *model.DomainItem
+				return zeroVal, errors.New("directive sampleAuth is not implemented")
+			}
+			return ec.directives.SampleAuth(ctx, nil, directive0)
+		}
+
+		tmp, err := directive1(rctx)
+		if err != nil {
+			return nil, graphql.ErrorOnPath(ctx, err)
+		}
+		if tmp == nil {
+			return nil, nil
+		}
+		if data, ok := tmp.(*model.DomainItem); ok {
+			return data, nil
+		}
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be *app/internal/core/graph/model.DomainItem`, tmp)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.DomainItem)
+	fc.Result = res
+	return ec.marshalODomainItem2ᚖappᚋinternalᚋcoreᚋgraphᚋmodelᚐDomainItem(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Query_domainItem(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_DomainItem_id(ctx, field)
+			case "name":
+				return ec.fieldContext_DomainItem_name(ctx, field)
+			case "status":
+				return ec.fieldContext_DomainItem_status(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type DomainItem", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_domainItem_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_domainItems(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Query_domainItems(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		directive0 := func(rctx context.Context) (any, error) {
+			ctx = rctx // use context from middleware stack in children
+			return ec.resolvers.Query().DomainItems(rctx, fc.Args["filter"].(*model.DefaultFilterInput))
+		}
+
+		directive1 := func(ctx context.Context) (any, error) {
+			if ec.directives.SampleAuth == nil {
+				var zeroVal *model.DomainItemList
+				return zeroVal, errors.New("directive sampleAuth is not implemented")
+			}
+			return ec.directives.SampleAuth(ctx, nil, directive0)
+		}
+
+		tmp, err := directive1(rctx)
+		if err != nil {
+			return nil, graphql.ErrorOnPath(ctx, err)
+		}
+		if tmp == nil {
+			return nil, nil
+		}
+		if data, ok := tmp.(*model.DomainItemList); ok {
+			return data, nil
+		}
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be *app/internal/core/graph/model.DomainItemList`, tmp)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -603,12 +1517,12 @@ func (ec *executionContext) _Query_somethings(ctx context.Context, field graphql
 		}
 		return graphql.Null
 	}
-	res := resTmp.([]*model.Something)
+	res := resTmp.(*model.DomainItemList)
 	fc.Result = res
-	return ec.marshalNSomething2ᚕᚖappᚋinternalᚋcoreᚋgraphᚋmodelᚐSomethingᚄ(ctx, field.Selections, res)
+	return ec.marshalNDomainItemList2ᚖappᚋinternalᚋcoreᚋgraphᚋmodelᚐDomainItemList(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Query_somethings(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Query_domainItems(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Query",
 		Field:      field,
@@ -616,13 +1530,24 @@ func (ec *executionContext) fieldContext_Query_somethings(_ context.Context, fie
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
-			case "id":
-				return ec.fieldContext_Something_id(ctx, field)
-			case "SomeEnum":
-				return ec.fieldContext_Something_SomeEnum(ctx, field)
+			case "rows":
+				return ec.fieldContext_DomainItemList_rows(ctx, field)
+			case "info":
+				return ec.fieldContext_DomainItemList_info(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type Something", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type DomainItemList", field.Name)
 		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_domainItems_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
 	}
 	return fc, nil
 }
@@ -753,94 +1678,6 @@ func (ec *executionContext) fieldContext_Query___schema(_ context.Context, field
 				return ec.fieldContext___Schema_directives(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type __Schema", field.Name)
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Something_id(ctx context.Context, field graphql.CollectedField, obj *model.Something) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Something_id(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.ID, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(string)
-	fc.Result = res
-	return ec.marshalNID2string(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Something_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Something",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type ID does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Something_SomeEnum(ctx context.Context, field graphql.CollectedField, obj *model.Something) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Something_SomeEnum(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.SomeEnum, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(model.SomeEnum)
-	fc.Result = res
-	return ec.marshalNSomeEnum2appᚋinternalᚋcoreᚋgraphᚋmodelᚐSomeEnum(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Something_SomeEnum(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Something",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type SomeEnum does not have child fields")
 		},
 	}
 	return fc, nil
@@ -2797,6 +3634,33 @@ func (ec *executionContext) fieldContext___Type_isOneOf(_ context.Context, field
 
 // region    **************************** input.gotpl *****************************
 
+func (ec *executionContext) unmarshalInputCreateDomainItemInput(ctx context.Context, obj any) (model.CreateDomainItemInput, error) {
+	var it model.CreateDomainItemInput
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"name"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "name":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Name = data
+		}
+	}
+
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputDefaultFilterInput(ctx context.Context, obj any) (model.DefaultFilterInput, error) {
 	var it model.DefaultFilterInput
 	asMap := map[string]any{}
@@ -2913,14 +3777,14 @@ func (ec *executionContext) unmarshalInputDefaultFilterSortInput(ctx context.Con
 	return it, nil
 }
 
-func (ec *executionContext) unmarshalInputMutateSomethingDTO(ctx context.Context, obj any) (model.MutateSomethingDto, error) {
-	var it model.MutateSomethingDto
+func (ec *executionContext) unmarshalInputUpdateDomainItemInput(ctx context.Context, obj any) (model.UpdateDomainItemInput, error) {
+	var it model.UpdateDomainItemInput
 	asMap := map[string]any{}
 	for k, v := range obj.(map[string]any) {
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"id", "SomeEnum"}
+	fieldsInOrder := [...]string{"id", "name", "status"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -2929,18 +3793,25 @@ func (ec *executionContext) unmarshalInputMutateSomethingDTO(ctx context.Context
 		switch k {
 		case "id":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
-			data, err := ec.unmarshalNInt2int(ctx, v)
+			data, err := ec.unmarshalNID2string(ctx, v)
 			if err != nil {
 				return it, err
 			}
 			it.ID = data
-		case "SomeEnum":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("SomeEnum"))
-			data, err := ec.unmarshalNSomeEnum2appᚋinternalᚋcoreᚋgraphᚋmodelᚐSomeEnum(ctx, v)
+		case "name":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
+			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
 				return it, err
 			}
-			it.SomeEnum = data
+			it.Name = data
+		case "status":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("status"))
+			data, err := ec.unmarshalNDomainItemStatus2appᚋinternalᚋcoreᚋgraphᚋmodelᚐDomainItemStatus(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Status = data
 		}
 	}
 
@@ -2954,6 +3825,177 @@ func (ec *executionContext) unmarshalInputMutateSomethingDTO(ctx context.Context
 // endregion ************************** interface.gotpl ***************************
 
 // region    **************************** object.gotpl ****************************
+
+var appTokenImplementors = []string{"AppToken"}
+
+func (ec *executionContext) _AppToken(ctx context.Context, sel ast.SelectionSet, obj *model.AppToken) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, appTokenImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("AppToken")
+		case "token":
+			out.Values[i] = ec._AppToken_token(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var deleteDomainItemResponseImplementors = []string{"DeleteDomainItemResponse"}
+
+func (ec *executionContext) _DeleteDomainItemResponse(ctx context.Context, sel ast.SelectionSet, obj *model.DeleteDomainItemResponse) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, deleteDomainItemResponseImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("DeleteDomainItemResponse")
+		case "success":
+			out.Values[i] = ec._DeleteDomainItemResponse_success(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var domainItemImplementors = []string{"DomainItem"}
+
+func (ec *executionContext) _DomainItem(ctx context.Context, sel ast.SelectionSet, obj *model.DomainItem) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, domainItemImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("DomainItem")
+		case "id":
+			out.Values[i] = ec._DomainItem_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "name":
+			out.Values[i] = ec._DomainItem_name(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "status":
+			out.Values[i] = ec._DomainItem_status(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var domainItemListImplementors = []string{"DomainItemList"}
+
+func (ec *executionContext) _DomainItemList(ctx context.Context, sel ast.SelectionSet, obj *model.DomainItemList) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, domainItemListImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("DomainItemList")
+		case "rows":
+			out.Values[i] = ec._DomainItemList_rows(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "info":
+			out.Values[i] = ec._DomainItemList_info(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
 
 var mutationImplementors = []string{"Mutation"}
 
@@ -2974,13 +4016,31 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("Mutation")
-		case "mutateSomething":
+		case "createDomainItem":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_mutateSomething(ctx, field)
+				return ec._Mutation_createDomainItem(ctx, field)
 			})
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
+		case "updateDomainItem":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_updateDomainItem(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "deleteDomainItem":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_deleteDomainItem(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "getAppToken":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_getAppToken(ctx, field)
+			})
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -3062,7 +4122,26 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("Query")
-		case "somethings":
+		case "domainItem":
+			field := field
+
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_domainItem(ctx, field)
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "domainItems":
 			field := field
 
 			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
@@ -3071,7 +4150,7 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
-				res = ec._Query_somethings(ctx, field)
+				res = ec._Query_domainItems(ctx, field)
 				if res == graphql.Null {
 					atomic.AddUint32(&fs.Invalids, 1)
 				}
@@ -3092,50 +4171,6 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Query___schema(ctx, field)
 			})
-		default:
-			panic("unknown field " + strconv.Quote(field.Name))
-		}
-	}
-	out.Dispatch(ctx)
-	if out.Invalids > 0 {
-		return graphql.Null
-	}
-
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
-
-	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
-
-	return out
-}
-
-var somethingImplementors = []string{"Something"}
-
-func (ec *executionContext) _Something(ctx context.Context, sel ast.SelectionSet, obj *model.Something) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, somethingImplementors)
-
-	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
-	for i, field := range fields {
-		switch field.Name {
-		case "__typename":
-			out.Values[i] = graphql.MarshalString("Something")
-		case "id":
-			out.Values[i] = ec._Something_id(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		case "SomeEnum":
-			out.Values[i] = ec._Something_SomeEnum(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -3509,6 +4544,107 @@ func (ec *executionContext) marshalNBoolean2bool(ctx context.Context, sel ast.Se
 	return res
 }
 
+func (ec *executionContext) unmarshalNCreateDomainItemInput2appᚋinternalᚋcoreᚋgraphᚋmodelᚐCreateDomainItemInput(ctx context.Context, v any) (model.CreateDomainItemInput, error) {
+	res, err := ec.unmarshalInputCreateDomainItemInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNDeleteDomainItemResponse2appᚋinternalᚋcoreᚋgraphᚋmodelᚐDeleteDomainItemResponse(ctx context.Context, sel ast.SelectionSet, v model.DeleteDomainItemResponse) graphql.Marshaler {
+	return ec._DeleteDomainItemResponse(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNDeleteDomainItemResponse2ᚖappᚋinternalᚋcoreᚋgraphᚋmodelᚐDeleteDomainItemResponse(ctx context.Context, sel ast.SelectionSet, v *model.DeleteDomainItemResponse) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._DeleteDomainItemResponse(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNDomainItem2appᚋinternalᚋcoreᚋgraphᚋmodelᚐDomainItem(ctx context.Context, sel ast.SelectionSet, v model.DomainItem) graphql.Marshaler {
+	return ec._DomainItem(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNDomainItem2ᚕᚖappᚋinternalᚋcoreᚋgraphᚋmodelᚐDomainItemᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.DomainItem) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNDomainItem2ᚖappᚋinternalᚋcoreᚋgraphᚋmodelᚐDomainItem(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNDomainItem2ᚖappᚋinternalᚋcoreᚋgraphᚋmodelᚐDomainItem(ctx context.Context, sel ast.SelectionSet, v *model.DomainItem) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._DomainItem(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNDomainItemList2appᚋinternalᚋcoreᚋgraphᚋmodelᚐDomainItemList(ctx context.Context, sel ast.SelectionSet, v model.DomainItemList) graphql.Marshaler {
+	return ec._DomainItemList(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNDomainItemList2ᚖappᚋinternalᚋcoreᚋgraphᚋmodelᚐDomainItemList(ctx context.Context, sel ast.SelectionSet, v *model.DomainItemList) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._DomainItemList(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNDomainItemStatus2appᚋinternalᚋcoreᚋgraphᚋmodelᚐDomainItemStatus(ctx context.Context, v any) (model.DomainItemStatus, error) {
+	var res model.DomainItemStatus
+	err := res.UnmarshalGQL(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNDomainItemStatus2appᚋinternalᚋcoreᚋgraphᚋmodelᚐDomainItemStatus(ctx context.Context, sel ast.SelectionSet, v model.DomainItemStatus) graphql.Marshaler {
+	return v
+}
+
 func (ec *executionContext) unmarshalNID2string(ctx context.Context, v any) (string, error) {
 	res, err := graphql.UnmarshalID(v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -3539,77 +4675,14 @@ func (ec *executionContext) marshalNInt2int(ctx context.Context, sel ast.Selecti
 	return res
 }
 
-func (ec *executionContext) unmarshalNMutateSomethingDTO2appᚋinternalᚋcoreᚋgraphᚋmodelᚐMutateSomethingDto(ctx context.Context, v any) (model.MutateSomethingDto, error) {
-	res, err := ec.unmarshalInputMutateSomethingDTO(ctx, v)
-	return res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) unmarshalNSomeEnum2appᚋinternalᚋcoreᚋgraphᚋmodelᚐSomeEnum(ctx context.Context, v any) (model.SomeEnum, error) {
-	var res model.SomeEnum
-	err := res.UnmarshalGQL(v)
-	return res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) marshalNSomeEnum2appᚋinternalᚋcoreᚋgraphᚋmodelᚐSomeEnum(ctx context.Context, sel ast.SelectionSet, v model.SomeEnum) graphql.Marshaler {
-	return v
-}
-
-func (ec *executionContext) marshalNSomething2appᚋinternalᚋcoreᚋgraphᚋmodelᚐSomething(ctx context.Context, sel ast.SelectionSet, v model.Something) graphql.Marshaler {
-	return ec._Something(ctx, sel, &v)
-}
-
-func (ec *executionContext) marshalNSomething2ᚕᚖappᚋinternalᚋcoreᚋgraphᚋmodelᚐSomethingᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Something) graphql.Marshaler {
-	ret := make(graphql.Array, len(v))
-	var wg sync.WaitGroup
-	isLen1 := len(v) == 1
-	if !isLen1 {
-		wg.Add(len(v))
-	}
-	for i := range v {
-		i := i
-		fc := &graphql.FieldContext{
-			Index:  &i,
-			Result: &v[i],
-		}
-		ctx := graphql.WithFieldContext(ctx, fc)
-		f := func(i int) {
-			defer func() {
-				if r := recover(); r != nil {
-					ec.Error(ctx, ec.Recover(ctx, r))
-					ret = nil
-				}
-			}()
-			if !isLen1 {
-				defer wg.Done()
-			}
-			ret[i] = ec.marshalNSomething2ᚖappᚋinternalᚋcoreᚋgraphᚋmodelᚐSomething(ctx, sel, v[i])
-		}
-		if isLen1 {
-			f(i)
-		} else {
-			go f(i)
-		}
-
-	}
-	wg.Wait()
-
-	for _, e := range ret {
-		if e == graphql.Null {
-			return graphql.Null
-		}
-	}
-
-	return ret
-}
-
-func (ec *executionContext) marshalNSomething2ᚖappᚋinternalᚋcoreᚋgraphᚋmodelᚐSomething(ctx context.Context, sel ast.SelectionSet, v *model.Something) graphql.Marshaler {
+func (ec *executionContext) marshalNPaginationInfo2ᚖappᚋinternalᚋcoreᚋgraphᚋmodelᚐPaginationInfo(ctx context.Context, sel ast.SelectionSet, v *model.PaginationInfo) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
 		}
 		return graphql.Null
 	}
-	return ec._Something(ctx, sel, v)
+	return ec._PaginationInfo(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalNString2string(ctx context.Context, v any) (string, error) {
@@ -3625,6 +4698,11 @@ func (ec *executionContext) marshalNString2string(ctx context.Context, sel ast.S
 		}
 	}
 	return res
+}
+
+func (ec *executionContext) unmarshalNUpdateDomainItemInput2appᚋinternalᚋcoreᚋgraphᚋmodelᚐUpdateDomainItemInput(ctx context.Context, v any) (model.UpdateDomainItemInput, error) {
+	res, err := ec.unmarshalInputUpdateDomainItemInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
 }
 
 func (ec *executionContext) marshalN__Directive2githubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐDirective(ctx context.Context, sel ast.SelectionSet, v introspection.Directive) graphql.Marshaler {
@@ -3878,6 +4956,13 @@ func (ec *executionContext) marshalN__TypeKind2string(ctx context.Context, sel a
 	return res
 }
 
+func (ec *executionContext) marshalOAppToken2ᚖappᚋinternalᚋcoreᚋgraphᚋmodelᚐAppToken(ctx context.Context, sel ast.SelectionSet, v *model.AppToken) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._AppToken(ctx, sel, v)
+}
+
 func (ec *executionContext) unmarshalOBoolean2bool(ctx context.Context, v any) (bool, error) {
 	res, err := graphql.UnmarshalBoolean(v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -3904,6 +4989,14 @@ func (ec *executionContext) marshalOBoolean2ᚖbool(ctx context.Context, sel ast
 	return res
 }
 
+func (ec *executionContext) unmarshalODefaultFilterInput2ᚖappᚋinternalᚋcoreᚋgraphᚋmodelᚐDefaultFilterInput(ctx context.Context, v any) (*model.DefaultFilterInput, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalInputDefaultFilterInput(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
 func (ec *executionContext) unmarshalODefaultFilterPaginationInput2ᚖappᚋinternalᚋcoreᚋgraphᚋmodelᚐDefaultFilterPaginationInput(ctx context.Context, v any) (*model.DefaultFilterPaginationInput, error) {
 	if v == nil {
 		return nil, nil
@@ -3918,6 +5011,13 @@ func (ec *executionContext) unmarshalODefaultFilterSortInput2ᚖappᚋinternal�
 	}
 	res, err := ec.unmarshalInputDefaultFilterSortInput(ctx, v)
 	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalODomainItem2ᚖappᚋinternalᚋcoreᚋgraphᚋmodelᚐDomainItem(ctx context.Context, sel ast.SelectionSet, v *model.DomainItem) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._DomainItem(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalOFilterPaginationLengthEnum2ᚖappᚋinternalᚋcoreᚋgraphᚋmodelᚐFilterPaginationLengthEnum(ctx context.Context, v any) (*model.FilterPaginationLengthEnum, error) {

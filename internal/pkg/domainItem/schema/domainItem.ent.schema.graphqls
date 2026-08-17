@@ -1,11 +1,22 @@
-# Represents a Something entity with an ID and an enum value.
-type Something {
-    id: ID! # Unique identifier for the Something entity.
-    SomeEnum: SomeEnum! # Enum value representing the state of the Something entity.
+# DomainItem is the template's example entity -- delete/rename this whole
+# module (schema + resolvers + svc/ctrl + the proto service it calls) when
+# bootstrapping a real domain.
+type DomainItem {
+    id: ID!
+    name: String!
+    status: DomainItemStatus!
 }
 
-# Enum representing possible states of a Something entity.
-enum SomeEnum {
-    Hello # Represents the 'Hello' state.
-    World # Represents the 'World' state.
+enum DomainItemStatus {
+    ACTIVE
+    ARCHIVED
+}
+
+type DomainItemList {
+    rows: [DomainItem!]!
+    info: PaginationInfo!
+}
+
+type DeleteDomainItemResponse {
+    success: Boolean!
 }
