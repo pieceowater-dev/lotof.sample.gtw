@@ -11,24 +11,21 @@ replace (
 require (
 	github.com/99designs/gqlgen v0.17.68
 	github.com/gofiber/fiber/v2 v2.52.10
+	github.com/golang-jwt/jwt/v5 v5.3.1
 	github.com/google/uuid v1.6.0
+	github.com/gorilla/websocket v1.5.0
 	github.com/joho/godotenv v1.5.1
+	github.com/pieceowater-dev/lotof.hub.proto v0.0.117
 	github.com/pieceowater-dev/lotof.lib.gossiper/v2 v2.0.43
+	github.com/pieceowater-dev/lotof.sample.proto v0.0.19
 	github.com/valyala/fasthttp v1.69.0
+	github.com/vektah/gqlparser/v2 v2.5.23
 	go.opentelemetry.io/otel v1.39.0
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp v1.39.0
 	go.opentelemetry.io/otel/sdk v1.39.0
+	go.opentelemetry.io/otel/trace v1.39.0
 	google.golang.org/grpc v1.78.0
 	google.golang.org/protobuf v1.36.11
-)
-
-require (
-	github.com/golang-jwt/jwt/v5 v5.3.1
-	github.com/gorilla/websocket v1.5.0
-	github.com/pieceowater-dev/lotof.hub.proto v0.0.117
-	github.com/pieceowater-dev/lotof.sample.proto v0.0.19
-	github.com/vektah/gqlparser/v2 v2.5.23
-	go.opentelemetry.io/otel/trace v1.39.0
 )
 
 require (
