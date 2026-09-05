@@ -1,5 +1,5 @@
 # syntax=docker/dockerfile:1.7
-FROM golang:1.25-alpine AS builder
+FROM golang:1.27-alpine AS builder
 
 # Install build dependencies (git, make, protoc and plugins for code generation)
 RUN apk add --no-cache git make protobuf protobuf-dev
