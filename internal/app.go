@@ -18,6 +18,7 @@ import (
 	gossiper "github.com/pieceowater-dev/lotof.lib.gossiper/v2"
 	"github.com/valyala/fasthttp/fasthttpadaptor"
 	"go.opentelemetry.io/otel/trace"
+	"go.opentelemetry.io/otel/trace/noop"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/health"
@@ -60,7 +61,7 @@ func NewApp() *App {
 		fallback := slog.Default()
 		fallback.Error("observability init failed", slog.Any("error", err))
 		obsLogger = fallback
-		tracer = trace.NewNoopTracerProvider().Tracer("noop")
+		tracer = noop.NewTracerProvider().Tracer("noop")
 		shutdown = func(context.Context) error { return nil }
 	}
 
