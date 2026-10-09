@@ -39,3 +39,7 @@ capital-billing
 .idea
 .vscode.idea
 .vscode
+# Built binaries
+/lotof.sample.gtw
+/server
+*-race
