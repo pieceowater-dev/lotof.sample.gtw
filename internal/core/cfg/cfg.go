@@ -26,6 +26,10 @@ type Config struct {
 	AppBundleName              string // app identifier registered in Hub's namespace_apps
 	LotofHubGatewayGrpcAddress string // Hub Gateway gRPC (hub token validation)
 	AppBundleSecret            string // secret for signing this app's tokens (HS256)
+
+	// ServiceAuthSecret is the shared service-to-service token (SERVICE_AUTH_SECRET):
+	// attached to outgoing gRPC calls and required on the inbound gRPC server.
+	ServiceAuthSecret string
 }
 
 var (
@@ -55,6 +59,7 @@ func Inst() *Config {
 			AppBundleName:              getEnv("APP_BUNDLE_NAME", "pieceowater.sample"),
 			LotofHubGatewayGrpcAddress: getEnv("LOTOF_HUB_GATEWAY_GRPC_ADDRESS", "localhost:50050"),
 			AppBundleSecret:            secretEnv("APP_BUNDLE_SECRET"),
+			ServiceAuthSecret:          getEnv("SERVICE_AUTH_SECRET", ""),
 		}
 	})
 	return instance

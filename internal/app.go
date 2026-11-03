@@ -16,14 +16,13 @@ import (
 	recovermw "github.com/gofiber/fiber/v2/middleware/recover"
 	"github.com/gorilla/websocket"
 	gossiper "github.com/pieceowater-dev/lotof.lib.gossiper/v2"
+	"github.com/pieceowater-dev/lotof.lib.gossiper/v2/httpx"
 	"github.com/valyala/fasthttp/fasthttpadaptor"
 	"go.opentelemetry.io/otel/trace"
 	"go.opentelemetry.io/otel/trace/noop"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
-	"google.golang.org/grpc/health"
 	healthgrpc "google.golang.org/grpc/health/grpc_health_v1"
-	"google.golang.org/grpc/reflection"
 
 	"app/internal/core/cfg"
 	"app/internal/core/generic/middleware"
@@ -66,6 +65,7 @@ func NewApp() *App {
 	}
 
 	gossiper.RegisterTransportContextMiddleware(observability.WithOutgoingMetadata)
+	gossiper.RegisterClientUnaryInterceptor(gossiper.ServiceAuthClientInterceptor(cfg.Inst().ServiceAuthSecret))
 
 	return &App{
 		ctx:      baseCtx,
@@ -80,16 +80,14 @@ func NewApp() *App {
 func (a *App) Start() {
 	// Inbound gRPC server: exposes tenants.GatewayService so Hub can provision
 	// a new namespace's schema in this domain's svc (see internal/pkg/gateway).
-	grpcServ := grpc.NewServer(
-		grpc.ChainUnaryInterceptor(
-			gossiper.RecoveryUnaryServerInterceptor(),
-			observability.GRPCServerInterceptor(a.logger, a.tracer),
-		),
+	// gossiper.NewGRPCServer adds recovery, keepalive, size limits, the health
+	// service (NOT_SERVING until Start finishes) and reflection only when
+	// GRPC_REFLECTION_ENABLED=true. Only callers holding SERVICE_AUTH_SECRET
+	// get past the service-auth interceptor; health checks stay open.
+	grpcServ, grpcHealth := gossiper.NewGRPCServer(
+		gossiper.ServiceAuthServerInterceptor(a.cfg.ServiceAuthSecret, "/grpc.health.v1.Health/"),
+		observability.GRPCServerInterceptor(a.logger, a.tracer),
 	)
-	grpcHealth := health.NewServer()
-	healthgrpc.RegisterHealthServer(grpcServ, grpcHealth)
-	grpcHealth.SetServingStatus("", healthgrpc.HealthCheckResponse_NOT_SERVING)
-	reflection.Register(grpcServ)
 
 	// Outbound gRPC client: talks to this domain's svc for all domain APIs.
 	// Pooled across several independent connections rather than one -- see
@@ -193,16 +191,18 @@ func (a *App) Start() {
 		},
 	})
 
-	fiberApp := fiber.New(fiber.Config{DisableStartupMessage: true})
+	fiberApp := fiber.New(httpx.FiberConfig())
 	// An unrecovered panic in any handler otherwise takes down the whole
 	// gateway process for every tenant.
 	fiberApp.Use(recovermw.New())
 	fiberApp.Use(func(c *fiber.Ctx) error {
-		middleware.NormalizeAPIPathPrefix(c)
+		httpx.NormalizeAPIPathPrefix(c)
 		return c.Next()
 	})
 	fiberApp.Use(func(c *fiber.Ctx) error {
-		middleware.FiberCORSMiddleware(c)
+		// Same-host origins only: reflecting any Origin together with
+		// credentials would let any website call the API as the user.
+		httpx.CORS(c, "SampleAuthorization")
 		if c.Method() == fiber.MethodOptions {
 			return c.SendStatus(fiber.StatusOK)
 		}
