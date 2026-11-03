@@ -1,9 +1,11 @@
 package cfg
 
 import (
+	"fmt"
 	"log/slog"
 	"os"
 	"strconv"
+	"strings"
 	"sync"
 
 	"github.com/joho/godotenv"
@@ -52,7 +54,7 @@ func Inst() *Config {
 
 			AppBundleName:              getEnv("APP_BUNDLE_NAME", "pieceowater.sample"),
 			LotofHubGatewayGrpcAddress: getEnv("LOTOF_HUB_GATEWAY_GRPC_ADDRESS", "localhost:50050"),
-			AppBundleSecret:            getEnv("APP_BUNDLE_SECRET", "12345678901234567890123456789012"),
+			AppBundleSecret:            secretEnv("APP_BUNDLE_SECRET"),
 		}
 	})
 	return instance
@@ -75,4 +77,20 @@ func getEnvFloat(key string, defaultValue float64) float64 {
 		}
 	}
 	return defaultValue
+}
+
+// secretEnv reads a secret without any compiled-in fallback. An empty value is
+// accepted only in development; elsewhere the service stops, naming the
+// variable (never its value).
+func secretEnv(key string) string {
+	value := os.Getenv(key)
+	if value == "" {
+		switch strings.ToLower(strings.TrimSpace(os.Getenv("ENVIRONMENT"))) {
+		case "", "dev", "development", "local", "test":
+		default:
+			fmt.Fprintf(os.Stderr, "refusing to start: required secret %s is not set\n", key)
+			os.Exit(1)
+		}
+	}
+	return value
 }
