@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
-	"net/url"
 	"strings"
 	"time"
 
@@ -28,9 +27,10 @@ import (
 	"app/internal/core/generic/middleware"
 	"app/internal/core/generic/observability"
 	"app/internal/core/graph"
-	"app/internal/core/grpcpool"
 	"app/internal/pkg"
 	resolverspkg "app/internal/pkg/_resolvers"
+
+	"github.com/pieceowater-dev/lotof.lib.gossiper/v2/grpcpool"
 )
 
 type Application interface {
@@ -147,25 +147,7 @@ func (a *App) Start() {
 	srv.AddTransport(transport.Websocket{
 		KeepAlivePingInterval: 20 * time.Second,
 		Upgrader: websocket.Upgrader{
-			CheckOrigin: func(r *http.Request) bool {
-				origin := r.Header.Get("Origin")
-				if origin == "" {
-					return true
-				}
-				parsedOrigin, err := url.Parse(origin)
-				if err != nil || parsedOrigin.Hostname() == "" {
-					return false
-				}
-				hostToCompare := r.Host
-				if forwarded := strings.TrimSpace(strings.Split(r.Header.Get("X-Forwarded-Host"), ",")[0]); forwarded != "" {
-					hostToCompare = forwarded
-				}
-				parsedHost, err := url.Parse("//" + hostToCompare)
-				if err != nil || parsedHost.Hostname() == "" {
-					return false
-				}
-				return parsedOrigin.Hostname() == parsedHost.Hostname()
-			},
+			CheckOrigin: httpx.WSCheckOrigin,
 		},
 		// graphql-ws sends auth via the connection_init payload, not real
 		// HTTP headers, so SampleAuthDirective (which normally reads
