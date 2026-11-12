@@ -26,3 +26,7 @@ func (c *GtwController) AddNamespaceTenant(ctx context.Context, req *tenants.Add
 func (c *GtwController) GetNamespaceHealth(ctx context.Context, req *tenants.GetTenantStatusRequest) (*tenants.GetNamespaceHealthResponse, error) {
 	return c.service.GetNamespaceHealth(ctx, req)
 }
+
+func (c *GtwController) GetNamespaceActivity(ctx context.Context, req *tenants.GetTenantActivityRequest) (*tenants.GetTenantActivityResponse, error) {
+	return c.service.GetNamespaceActivity(ctx, req)
+}

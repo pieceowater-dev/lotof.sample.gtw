@@ -17,7 +17,7 @@ require (
 	github.com/joho/godotenv v1.5.1
 	github.com/pieceowater-dev/lotof.hub.proto v0.0.117
 	github.com/pieceowater-dev/lotof.lib.gossiper/v2 v2.0.86
-	github.com/pieceowater-dev/lotof.sample.proto v0.0.19
+	github.com/pieceowater-dev/lotof.sample.proto v0.0.22
 	github.com/valyala/fasthttp v1.69.0
 	github.com/vektah/gqlparser/v2 v2.5.23
 	go.opentelemetry.io/otel v1.45.0
